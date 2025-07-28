@@ -1,0 +1,23 @@
+{
+  "search_metadata": {
+    "origin_address": "Small Town Test",
+    "search_radius_meters": 4828,
+    "search_radius_miles": 3.0,
+    "itinerary_radius_meters": 4828,
+    "itinerary_radius_miles": 3.0,
+    "categories_searched": 9,
+    "total_places_found": 0,
+    "timestamp": "2025-07-27 19:40:53"
+  },
+  "results_by_category": {
+    "restaurants near me": [],
+    "cafes and bakeries near me": [],
+    "parks near me": [],
+    "delis near me": [],
+    "thrift stores near me": [],
+    "tourist attractions near me": [],
+    "museums near me": [],
+    "markets near me": [],
+    "galleries near me": []
+  }
+}

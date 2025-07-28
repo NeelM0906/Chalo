@@ -1,0 +1,71 @@
+{
+  "search_metadata": {
+    "origin_address": "Rural Town, Montana",
+    "search_radius_meters": 4828,
+    "search_radius_miles": 3.0,
+    "itinerary_radius_meters": 4828,
+    "itinerary_radius_miles": 3.0,
+    "categories_searched": 9,
+    "total_places_found": 2,
+    "timestamp": "2025-07-27 19:20:33"
+  },
+  "results_by_category": {
+    "cafes and bakeries near me": [],
+    "restaurants near me": [],
+    "delis near me": [],
+    "thrift stores near me": [],
+    "parks near me": [
+      {
+        "place_id": null,
+        "name": "Playground by Boulder",
+        "latitude": 46.8796822,
+        "longitude": -110.3625658,
+        "address": "Here, MT 59479, USA",
+        "distance_meters": 0.0,
+        "distance_miles": null,
+        "rating": null,
+        "user_ratings_total": null,
+        "price_level": null,
+        "types": [
+          "establishment",
+          "park",
+          "point_of_interest"
+        ],
+        "opening_hours": null,
+        "phone_number": null,
+        "website": null,
+        "photo_url": null,
+        "latest_review": null,
+        "editorial_summary": null
+      }
+    ],
+    "tourist attractions near me": [],
+    "galleries near me": [],
+    "markets near me": [],
+    "museums near me": [
+      {
+        "place_id": null,
+        "name": "Masoola Montana",
+        "latitude": 46.8796822,
+        "longitude": -110.3625658,
+        "address": "Montana 59479, USA",
+        "distance_meters": 0.0,
+        "distance_miles": null,
+        "rating": null,
+        "user_ratings_total": null,
+        "price_level": null,
+        "types": [
+          "point_of_interest",
+          "museum",
+          "establishment"
+        ],
+        "opening_hours": null,
+        "phone_number": null,
+        "website": null,
+        "photo_url": null,
+        "latest_review": null,
+        "editorial_summary": null
+      }
+    ]
+  }
+}

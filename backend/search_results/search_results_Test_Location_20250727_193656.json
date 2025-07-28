@@ -1,0 +1,23 @@
+{
+  "search_metadata": {
+    "origin_address": "Test Location",
+    "search_radius_meters": 4828,
+    "search_radius_miles": 3.0,
+    "itinerary_radius_meters": 4828,
+    "itinerary_radius_miles": 3.0,
+    "categories_searched": 9,
+    "total_places_found": 0,
+    "timestamp": "2025-07-27 19:36:56"
+  },
+  "results_by_category": {
+    "cafes and bakeries near me": [],
+    "parks near me": [],
+    "restaurants near me": [],
+    "delis near me": [],
+    "tourist attractions near me": [],
+    "thrift stores near me": [],
+    "museums near me": [],
+    "galleries near me": [],
+    "markets near me": []
+  }
+}

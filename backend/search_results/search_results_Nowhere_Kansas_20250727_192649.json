@@ -1,0 +1,55 @@
+{
+  "search_metadata": {
+    "origin_address": "Nowhere, Kansas",
+    "search_radius_meters": 4828,
+    "search_radius_miles": 3.0,
+    "itinerary_radius_meters": 4828,
+    "itinerary_radius_miles": 3.0,
+    "categories_searched": 9,
+    "total_places_found": 1,
+    "timestamp": "2025-07-27 19:26:49"
+  },
+  "results_by_category": {
+    "cafes and bakeries near me": [],
+    "restaurants near me": [],
+    "delis near me": [],
+    "thrift stores near me": [],
+    "tourist attractions near me": [],
+    "parks near me": [
+      {
+        "place_id": null,
+        "name": "Heron Point Beach",
+        "latitude": 39.011902,
+        "longitude": -98.4842465,
+        "address": "4 Crappie Cove West, Richland, KS 67648, USA",
+        "distance_meters": 0.0,
+        "distance_miles": null,
+        "rating": null,
+        "user_ratings_total": null,
+        "price_level": null,
+        "types": [
+          "establishment",
+          "park",
+          "point_of_interest"
+        ],
+        "opening_hours": {
+          "Monday": "Open 24 hours",
+          "Tuesday": "Open 24 hours",
+          "Wednesday": "Open 24 hours",
+          "Thursday": "Open 24 hours",
+          "Friday": "Open 24 hours",
+          "Saturday": "Open 24 hours",
+          "Sunday": "Open 24 hours"
+        },
+        "phone_number": null,
+        "website": null,
+        "photo_url": "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=ATKogpesqgSj6VMxCeytiY8Dh04xvFwPo5mJfiF1i5WW_ybeay4tpx5ltyCd4_DSerl-HFDrCPvTZE_7Txv805xJ9VHTf0sC9FWv-pD8eX4gJ3BnxwfFgePa9f5uuz5ymweJzB8-o9boFCm4uY6pUGNFgr70dGtRaLUMdzkvM1qFRK9a-7LX3xCHd8gsdMJ84JvQJLHW7KWcsTXTftYd4BEMjEtOPxx9lT3tMZ7LFf7EX4cK-i2aFL5-HkQ5C1Mlx061uLas2qIQnJKm-d87EIRy4ObuiNiEAS7Mxa3A63A83Nta5XIvmQf7C77EASKC6fLwHsqQckwpt2Bva7FaXeteJNk9rx2lPs6WP0NffS1Udj9ylVsOB-r63OIOUTCSm_C_3DQuYHxOpJ2VNzCPOdG5CwXT7JjjKpLoVj6wIAJWhPFxMhQd6GGUeHMAGrIDETuy&key=AIzaSyBqEMWlxcFmX94S3rhN7tiddnUm4AmPIF8",
+        "latest_review": null,
+        "editorial_summary": null
+      }
+    ],
+    "galleries near me": [],
+    "museums near me": [],
+    "markets near me": []
+  }
+}

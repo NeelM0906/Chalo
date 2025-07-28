@@ -1,0 +1,23 @@
+{
+  "search_metadata": {
+    "origin_address": "my current location",
+    "search_radius_meters": 2414,
+    "search_radius_miles": 1.5,
+    "itinerary_radius_meters": 2414,
+    "itinerary_radius_miles": 1.5,
+    "categories_searched": 9,
+    "total_places_found": 0,
+    "timestamp": "2025-07-27 21:38:21"
+  },
+  "results_by_category": {
+    "parks near me": [],
+    "cafes and bakeries near me": [],
+    "restaurants near me": [],
+    "delis near me": [],
+    "thrift stores near me": [],
+    "tourist attractions near me": [],
+    "museums near me": [],
+    "galleries near me": [],
+    "markets near me": []
+  }
+}
