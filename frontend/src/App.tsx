@@ -10,7 +10,9 @@ import PresetButtons from './components/PresetButtons';
 import FilterDropdowns from './components/FilterDropdowns';
 import { LogoIcon, HeartIcon, XIcon, MapPinIcon, UsersIcon } from './components/icons';
 import { FavoritesProvider, useFavorites } from './context/FavoritesContext';
+import { TripProvider } from './context/TripContext';
 import WanderBuddiesPage from './components/WanderBuddiesPage';
+import TripPage from './components/TripPage';
 
 // --- Home Page Component ---
 const HomePage: React.FC = () => {
@@ -243,6 +245,9 @@ const AppContent: React.FC = () => {
     case '#/buddies':
       page = <WanderBuddiesPage />;
       break;
+    case '#/trip':
+      page = <TripPage />;
+      break;
     default:
       page = <HomePage />;
   }
@@ -281,7 +286,9 @@ const AppContent: React.FC = () => {
 // --- App Wrapper with Provider ---
 const App: React.FC = () => (
   <FavoritesProvider>
-    <AppContent />
+    <TripProvider>
+      <AppContent />
+    </TripProvider>
   </FavoritesProvider>
 );
 

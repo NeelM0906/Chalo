@@ -52,7 +52,7 @@ const LocationInput: React.FC<LocationInputProps> = ({ onSearch, isLoading }) =>
                 className="w-full sm:w-auto px-6 py-3 bg-accent text-primary font-bold rounded-md hover:bg-cyan-300 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
                 <WanderingEyesIcon className="w-8 h-4" />
-                {isLoading ? 'Wandering...' : 'Wander'}
+                {isLoading ? 'Chaloing...' : 'Chalo'}
             </button>
         </div>
       </form>

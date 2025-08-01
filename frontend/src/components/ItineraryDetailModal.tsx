@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Itinerary, Stop } from '../types';
 import { XIcon, ClockIcon, WalkIcon, MapPinIcon, HeartIcon, RefreshIcon } from './icons';
 import { useFavorites } from '../context/FavoritesContext';
+import { useTrip } from '../context/TripContext';
 import { refreshSpot, refreshCategory } from '../services/apiService';
 import RefreshButton from './RefreshButton';
 import CategoryRefreshButton from './CategoryRefreshButton';
@@ -117,6 +118,7 @@ const StopItem: React.FC<StopItemProps> = ({ stop, isLast, location, onRefresh, 
 
 
 const ItineraryDetailModal: React.FC<ItineraryDetailModalProps> = ({ itinerary, onClose, location }) => {
+  const { startTrip } = useTrip();
   const [stops, setStops] = useState<Stop[]>(itinerary.stops);
   const [refreshingStopId, setRefreshingStopId] = useState<string | null>(null);
   const [categoryRefreshingStopId, setCategoryRefreshingStopId] = useState<string | null>(null);
@@ -240,6 +242,20 @@ const ItineraryDetailModal: React.FC<ItineraryDetailModalProps> = ({ itinerary, 
       setCategoryRefreshingStopId(null);
     }
   };
+
+  const handleStartTrip = () => {
+    // Create updated itinerary with current stops
+    const updatedItinerary: Itinerary = {
+      ...itinerary,
+      stops: stops,
+      duration_minutes: totalDuration
+    };
+    
+    startTrip(updatedItinerary, location);
+    onClose();
+    // Navigate to trip page
+    window.location.hash = '#/trip';
+  };
   
   return (
     <div 
@@ -292,6 +308,17 @@ const ItineraryDetailModal: React.FC<ItineraryDetailModalProps> = ({ itinerary, 
             
             {/* Embedded Map showing walking directions */}
             <MapEmbed stops={stops} location={location} />
+            
+            {/* Start Trip Button */}
+            <div className="mt-6 pt-6 border-t border-gray-700">
+              <button
+                onClick={handleStartTrip}
+                className="w-full px-6 py-3 bg-accent text-primary font-bold rounded-md hover:bg-cyan-300 transition-colors flex items-center justify-center gap-2"
+              >
+                <MapPinIcon className="w-5 h-5" />
+                Start this trip
+              </button>
+            </div>
         </div>
       </div>
       <style>{`
