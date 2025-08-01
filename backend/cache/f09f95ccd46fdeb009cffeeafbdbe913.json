@@ -7,16 +7,16 @@
     "itinerary_radius_miles": 1.5,
     "categories_searched": 9,
     "total_places_found": 0,
-    "timestamp": "2025-07-27 21:38:21"
+    "timestamp": "2025-08-01 02:03:13"
   },
   "results_by_category": {
-    "parks near me": [],
     "cafes and bakeries near me": [],
     "restaurants near me": [],
+    "parks near me": [],
     "delis near me": [],
     "thrift stores near me": [],
-    "tourist attractions near me": [],
     "museums near me": [],
+    "tourist attractions near me": [],
     "galleries near me": [],
     "markets near me": []
   }
