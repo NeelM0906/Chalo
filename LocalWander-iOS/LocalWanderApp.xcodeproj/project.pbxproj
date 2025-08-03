@@ -1,0 +1,433 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 70;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1234567890123456789012A /* LocalWanderAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789012B /* LocalWanderAppApp.swift */; };
+		A1234567890123456789013A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789013B /* ContentView.swift */; };
+		A1234567890123456789014A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789014B /* Assets.xcassets */; };
+		A1234567890123456789015A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789015B /* Preview Assets.xcassets */; };
+		A1234567890123456789016A /* Stop.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789016B /* Stop.swift */; };
+		A1234567890123456789017A /* Itinerary.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789017B /* Itinerary.swift */; };
+		A1234567890123456789018A /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789018B /* APIService.swift */; };
+		A1234567890123456789019A /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789019B /* HomeView.swift */; };
+		A123456789012345678901AA /* ItineraryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A123456789012345678901AB /* ItineraryCard.swift */; };
+		A123456789012345678901AC /* LocationInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A123456789012345678901AD /* LocationInputView.swift */; };
+		A123456789012345678901AE /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A123456789012345678901AF /* FavoritesView.swift */; };
+		A123456789012345678901B0 /* FavoritesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A123456789012345678901B1 /* FavoritesManager.swift */; };
+		CCF28AEF2E3FA72B00D2157E /* ItineraryDetailView 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCF28AEE2E3FA72B00D2157E /* ItineraryDetailView 2.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A1234567890123456789012B /* LocalWanderAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalWanderAppApp.swift; sourceTree = "<group>"; };
+		A1234567890123456789013B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A1234567890123456789014B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A1234567890123456789015B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		A1234567890123456789016B /* Stop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stop.swift; sourceTree = "<group>"; };
+		A1234567890123456789017B /* Itinerary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Itinerary.swift; sourceTree = "<group>"; };
+		A1234567890123456789018B /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
+		A1234567890123456789019B /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		A123456789012345678901AB /* ItineraryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItineraryCard.swift; sourceTree = "<group>"; };
+		A123456789012345678901AD /* LocationInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationInputView.swift; sourceTree = "<group>"; };
+		A123456789012345678901AF /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
+		A123456789012345678901B1 /* FavoritesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesManager.swift; sourceTree = "<group>"; };
+		A123456789012345678901B2 /* LocalWanderApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LocalWanderApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CCF28AEE2E3FA72B00D2157E /* ItineraryDetailView 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ItineraryDetailView 2.swift"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		CCF28AED2E3FA6F700D2157E /* Preview Content */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Preview Content"; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A123456789012345678901B3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A123456789012345678901B4 /* LocalWanderApp */ = {
+			isa = PBXGroup;
+			children = (
+				CCF28AED2E3FA6F700D2157E /* Preview Content */,
+				A1234567890123456789012B /* LocalWanderAppApp.swift */,
+				A123456789012345678901B5 /* Views */,
+				A123456789012345678901B6 /* Models */,
+				A123456789012345678901B7 /* Services */,
+				A123456789012345678901B8 /* Components */,
+				A123456789012345678901B9 /* Utils */,
+				A1234567890123456789014B /* Assets.xcassets */,
+				A123456789012345678901BA /* Preview Content */,
+			);
+			path = LocalWanderApp;
+			sourceTree = "<group>";
+		};
+		A123456789012345678901B5 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A1234567890123456789013B /* ContentView.swift */,
+				A1234567890123456789019B /* HomeView.swift */,
+				A123456789012345678901AF /* FavoritesView.swift */,
+				CCF28AEE2E3FA72B00D2157E /* ItineraryDetailView 2.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A123456789012345678901B6 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A1234567890123456789016B /* Stop.swift */,
+				A1234567890123456789017B /* Itinerary.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A123456789012345678901B7 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A1234567890123456789018B /* APIService.swift */,
+				A123456789012345678901B1 /* FavoritesManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A123456789012345678901B8 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				A123456789012345678901AB /* ItineraryCard.swift */,
+				A123456789012345678901AD /* LocationInputView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		A123456789012345678901B9 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		A123456789012345678901BA /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				A1234567890123456789015B /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		A123456789012345678901BB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A123456789012345678901B2 /* LocalWanderApp.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A123456789012345678901BC = {
+			isa = PBXGroup;
+			children = (
+				A123456789012345678901B4 /* LocalWanderApp */,
+				A123456789012345678901BB /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A123456789012345678901BD /* LocalWanderApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A123456789012345678901BE /* Build configuration list for PBXNativeTarget "LocalWanderApp" */;
+			buildPhases = (
+				A123456789012345678901BF /* Sources */,
+				A123456789012345678901B3 /* Frameworks */,
+				A123456789012345678901C0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				CCF28AED2E3FA6F700D2157E /* Preview Content */,
+			);
+			name = LocalWanderApp;
+			productName = LocalWanderApp;
+			productReference = A123456789012345678901B2 /* LocalWanderApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A123456789012345678901C1 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					A123456789012345678901BD = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = A123456789012345678901C2 /* Build configuration list for PBXProject "LocalWanderApp" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A123456789012345678901BC;
+			productRefGroup = A123456789012345678901BB /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A123456789012345678901BD /* LocalWanderApp */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A123456789012345678901C0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1234567890123456789015A /* Preview Assets.xcassets in Resources */,
+				A1234567890123456789014A /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A123456789012345678901BF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1234567890123456789013A /* ContentView.swift in Sources */,
+				A1234567890123456789016A /* Stop.swift in Sources */,
+				A1234567890123456789017A /* Itinerary.swift in Sources */,
+				A1234567890123456789018A /* APIService.swift in Sources */,
+				A1234567890123456789019A /* HomeView.swift in Sources */,
+				A123456789012345678901AA /* ItineraryCard.swift in Sources */,
+				CCF28AEF2E3FA72B00D2157E /* ItineraryDetailView 2.swift in Sources */,
+				A123456789012345678901AC /* LocationInputView.swift in Sources */,
+				A123456789012345678901AE /* FavoritesView.swift in Sources */,
+				A123456789012345678901B0 /* FavoritesManager.swift in Sources */,
+				A1234567890123456789012A /* LocalWanderAppApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A123456789012345678901C3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A123456789012345678901C4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A123456789012345678901C5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"LocalWanderApp/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.localwander.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A123456789012345678901C6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"LocalWanderApp/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.localwander.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A123456789012345678901BE /* Build configuration list for PBXNativeTarget "LocalWanderApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A123456789012345678901C5 /* Debug */,
+				A123456789012345678901C6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A123456789012345678901C2 /* Build configuration list for PBXProject "LocalWanderApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A123456789012345678901C3 /* Debug */,
+				A123456789012345678901C4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A123456789012345678901C1 /* Project object */;
+}
