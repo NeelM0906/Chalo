@@ -45,7 +45,6 @@ class ItineraryGenerator:
         'Bookstore': 'shopping',
         'Library': 'culture',
         'Landmark': 'culture',
-        'Entertainment': 'entertainment',
         'Local Spot': 'misc'
     }
     
@@ -81,9 +80,11 @@ class ItineraryGenerator:
             'church': 'Landmark',
             'synagogue': 'Landmark',
             'mosque': 'Landmark',
-            'amusement_park': 'Entertainment',
-            'zoo': 'Entertainment',
-            'movie_theater': 'Entertainment'
+            'amusement_park': 'Attraction',
+            'zoo': 'Attraction',
+            'movie_theater': 'Attraction',
+            'bowling_alley': 'Attraction',
+            'aquarium': 'Attraction'
         }
         
         for place_type in types:

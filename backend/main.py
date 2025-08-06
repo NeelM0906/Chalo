@@ -84,6 +84,21 @@ class CustomTripRequest(BaseModel):
     categories: List[str]  # List of category IDs like ['cafe', 'restaurant', 'park']
     max_distance_miles: float = 1.5
 
+class AddSpotRequest(BaseModel):
+    location: str
+    position: int  # 0-based index where to insert the spot
+    category: Optional[str] = None  # Optional category filter
+    excluded_ids: List[str] = []  # IDs of spots to exclude
+
+class RemoveSpotRequest(BaseModel):
+    spot_id: str
+
+class GetAvailableSpotsRequest(BaseModel):
+    location: str
+    category: Optional[str] = None
+    excluded_ids: List[str] = []
+    max_distance_miles: float = 1.5
+
 @app.get("/")
 async def root():
     return {
@@ -424,15 +439,19 @@ async def get_custom_trips(request: CustomTripRequest):
         # Also cache with location key for refresh endpoints
         search_results_cache[location] = search_results
         
-        # Generate itineraries from search results
-        itineraries = itinerary_generator.generate_itineraries(
-            search_results, location, None, None, max_distance_miles
+        # Generate custom itineraries with no distance constraints
+        itineraries = itinerary_generator.generate_custom_itineraries(
+            search_results, location, max_distance_miles
         )
         
         if not itineraries:
-            error_msg = f"Could not find enough places to create custom trips for '{location}'"
-            error_msg += f" with selected categories within {max_distance_miles} miles"
-            error_msg += ". Try adjusting your categories or distance range."
+            total_places = sum(len(places) for places in search_results.get('results_by_category', {}).values())
+            error_msg = f"Could not create custom trips for '{location}' with selected categories"
+            if total_places == 0:
+                error_msg += f" - no places found within {max_distance_miles} miles"
+            else:
+                error_msg += f" - found {total_places} places but could not create valid itineraries"
+            error_msg += ". Try selecting different categories or increasing distance range."
             
             raise HTTPException(status_code=404, detail=error_msg)
         
@@ -456,6 +475,74 @@ async def get_custom_trips(request: CustomTripRequest):
         raise HTTPException(
             status_code=500, 
             detail="An error occurred while generating custom trips. Please try again."
+        )
+
+@app.post("/api/get-available-spots")
+async def get_available_spots(request: GetAvailableSpotsRequest):
+    """
+    Get available spots that can be added to an itinerary
+    """
+    try:
+        location = request.location.strip()
+        
+        if not location or len(location) < 2:
+            raise HTTPException(status_code=400, detail="Location must be at least 2 characters long")
+        
+        print(f"Getting available spots for: {location}")
+        
+        # Use cached search results if available, otherwise search fresh
+        if location not in search_results_cache:
+            # Perform fresh search
+            search_results = search_engine.search_all_categories(location, request.max_distance_miles)
+            search_results_cache[location] = search_results
+        else:
+            search_results = search_results_cache[location]
+        
+        # Find available places
+        available_places = []
+        for category_results in search_results.get('results_by_category', {}).values():
+            for place in category_results:
+                # Skip excluded places
+                if place.get('place_id') in request.excluded_ids:
+                    continue
+                
+                # Filter by category if specified
+                if request.category:
+                    place_category = itinerary_generator.categorize_place(place)
+                    if request.category.lower() not in place_category.lower():
+                        continue
+                
+                # Check distance constraint
+                distance_meters = place.get('distance_meters', 0)
+                max_distance_meters = request.max_distance_miles * 1609.34
+                if distance_meters <= max_distance_meters:
+                    available_places.append(place)
+        
+        if not available_places:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No available spots found for {location}"
+            )
+        
+        # Sort by rating and distance
+        available_places.sort(key=lambda x: (-(x.get('rating') or 0), x.get('distance_meters', 0)))
+        
+        # Convert to stops (limit to top 20 for performance)
+        available_spots = []
+        for place in available_places[:20]:
+            spot = itinerary_generator.create_stop_from_place(place)
+            available_spots.append(spot)
+        
+        print(f"Found {len(available_spots)} available spots")
+        return {"spots": available_spots}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting available spots: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while getting available spots."
         )
 
 if __name__ == "__main__":

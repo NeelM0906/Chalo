@@ -226,6 +226,48 @@ export const getCustomTrips = async (
     }
 };
 
+export const getAvailableSpots = async (
+    location: string,
+    category?: string,
+    excludedIds: string[] = [],
+    maxDistanceMiles: number = 1.5
+): Promise<{ spots: Stop[] }> => {
+    try {
+        const requestBody = {
+            location,
+            category,
+            excluded_ids: excludedIds,
+            max_distance_miles: maxDistanceMiles
+        };
+
+        const response = await fetch(`${API_BASE_URL}/api/get-available-spots`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+            let errorMessage = `HTTP error! status: ${response.status}`;
+
+            try {
+                const errorData: ErrorResponse = await response.json();
+                errorMessage = errorData.detail || errorMessage;
+            } catch {
+                // If we can't parse error response, use default message
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error getting available spots:', error);
+        throw error;
+    }
+};
+
 export const healthCheck = async (): Promise<boolean> => {
     try {
         const response = await fetch(`${API_BASE_URL}/api/health`);

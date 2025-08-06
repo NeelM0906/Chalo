@@ -3,14 +3,14 @@ import { Itinerary } from '../types';
 import { getCustomTrips } from '../services/apiService';
 import WanderingEyesAnimation from './WanderingEyesAnimation';
 import ItineraryCard from './ItineraryCard';
-import ItineraryDetailModal from './ItineraryDetailModal';
-import { 
-  TreeIcon, 
-  PaletteIcon, 
-  UtensilsIcon, 
-  LandmarkIcon, 
+import EditableItineraryModal from './EditableItineraryModal';
+import {
+  TreeIcon,
+  PaletteIcon,
+  UtensilsIcon,
+  LandmarkIcon,
   ShoppingBagIcon,
-  MapPinIcon 
+  MapPinIcon
 } from './icons';
 
 interface CategoryOption {
@@ -47,7 +47,7 @@ const CustomTripPage: React.FC = () => {
   const [hasSearched, setHasSearched] = useState<boolean>(false);
 
   const handleCategoryToggle = (categoryId: string) => {
-    setSelectedCategories(prev => 
+    setSelectedCategories(prev =>
       prev.includes(categoryId)
         ? prev.filter(id => id !== categoryId)
         : [...prev, categoryId]
@@ -73,7 +73,7 @@ const CustomTripPage: React.FC = () => {
     try {
       // Create a minimum 3-second delay for better UX
       const minDelay = new Promise(resolve => setTimeout(resolve, 3000));
-      
+
       // Convert selected category IDs to API values
       const apiCategories = selectedCategories.map(categoryId => {
         const categoryOption = CATEGORY_OPTIONS.find(option => option.id === categoryId);
@@ -86,10 +86,10 @@ const CustomTripPage: React.FC = () => {
         apiCategories,
         selectedDistance
       );
-      
+
       // Wait for both the API call and minimum delay
       const [result] = await Promise.all([apiCall, minDelay]);
-      
+
       if (result.itineraries && result.itineraries.length > 0) {
         // The backend already limits to 3 itineraries for custom trips
         setItineraries(result.itineraries);
@@ -153,17 +153,16 @@ const CustomTripPage: React.FC = () => {
           {CATEGORY_OPTIONS.map((category) => {
             const IconComponent = category.icon;
             const isSelected = selectedCategories.includes(category.id);
-            
+
             return (
               <button
                 key={category.id}
                 onClick={() => handleCategoryToggle(category.id)}
                 disabled={isLoading}
-                className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                  isSelected
-                    ? 'border-accent bg-accent/10 text-accent'
-                    : 'border-gray-600 bg-card text-gray-300 hover:border-gray-500 hover:text-white'
-                } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                className={`p-4 rounded-lg border-2 transition-all duration-200 ${isSelected
+                  ? 'border-accent bg-accent/10 text-accent'
+                  : 'border-gray-600 bg-card text-gray-300 hover:border-gray-500 hover:text-white'
+                  } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <IconComponent className="w-8 h-8 mx-auto mb-2" />
                 <span className="text-sm font-medium">{category.name}</span>
@@ -187,11 +186,10 @@ const CustomTripPage: React.FC = () => {
               key={option.value}
               onClick={() => setSelectedDistance(option.value)}
               disabled={isLoading}
-              className={`px-6 py-3 rounded-lg border-2 transition-all duration-200 ${
-                selectedDistance === option.value
-                  ? 'border-accent bg-accent/10 text-accent'
-                  : 'border-gray-600 bg-card text-gray-300 hover:border-gray-500 hover:text-white'
-              } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              className={`px-6 py-3 rounded-lg border-2 transition-all duration-200 ${selectedDistance === option.value
+                ? 'border-accent bg-accent/10 text-accent'
+                : 'border-gray-600 bg-card text-gray-300 hover:border-gray-500 hover:text-white'
+                } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               {option.label}
             </button>
@@ -260,12 +258,13 @@ const CustomTripPage: React.FC = () => {
         </div>
       )}
 
-      {/* Itinerary Detail Modal */}
+      {/* Editable Itinerary Modal */}
       {selectedItinerary && (
-        <ItineraryDetailModal
+        <EditableItineraryModal
           itinerary={selectedItinerary}
           onClose={handleCloseModal}
           location={location}
+          maxDistanceMiles={selectedDistance}
         />
       )}
     </div>

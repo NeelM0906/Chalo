@@ -33,3 +33,21 @@ export interface RefreshSpotRequest {
   category: string;
   excluded_ids: string[];
 }
+
+export interface AddSpotRequest {
+  location: string;
+  position: number;
+  category?: string;
+  excluded_ids: string[];
+}
+
+export interface GetAvailableSpotsRequest {
+  location: string;
+  category?: string;
+  excluded_ids: string[];
+  max_distance_miles: number;
+}
+
+export interface AvailableSpotsResponse {
+  spots: Stop[];
+}

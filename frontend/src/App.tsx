@@ -3,7 +3,7 @@ import { Itinerary, Stop } from './types';
 import { getItineraries } from './services/apiService';
 import LocationInput from './components/LocationInput';
 import ItineraryCard from './components/ItineraryCard';
-import ItineraryDetailModal from './components/ItineraryDetailModal';
+import EditableItineraryModal from './components/EditableItineraryModal';
 import WanderingEyesAnimation from './components/WanderingEyesAnimation';
 
 import PresetButtons from './components/PresetButtons';
@@ -150,10 +150,11 @@ const HomePage: React.FC = () => {
       )}
 
       {selectedItinerary && (
-        <ItineraryDetailModal
+        <EditableItineraryModal
           itinerary={selectedItinerary}
           onClose={handleCloseModal}
           location={location}
+          maxDistanceMiles={distanceFilter}
         />
       )}
     </>

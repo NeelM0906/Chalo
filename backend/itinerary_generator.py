@@ -45,7 +45,6 @@ class ItineraryGenerator:
         'Bookstore': 'shopping',
         'Library': 'culture',
         'Landmark': 'culture',
-        'Entertainment': 'entertainment',
         'Local Spot': 'misc'
     }
     
@@ -117,9 +116,11 @@ class ItineraryGenerator:
             'church': 'Landmark',
             'synagogue': 'Landmark',
             'mosque': 'Landmark',
-            'amusement_park': 'Entertainment',
-            'zoo': 'Entertainment',
-            'movie_theater': 'Entertainment'
+            'amusement_park': 'Attraction',
+            'zoo': 'Attraction',
+            'movie_theater': 'Attraction',
+            'bowling_alley': 'Attraction',
+            'aquarium': 'Attraction'
         }
         
         for place_type in types:
@@ -173,40 +174,53 @@ class ItineraryGenerator:
         
         return R * c
     
-    def validate_distance_constraints(self, places: List[Dict], max_distance_miles: float = 1.5, total_places_found: int = 50) -> bool:
-        """Check distance constraints with adaptive thresholds based on search context"""
+    def calculate_area_density(self, total_places: int, search_radius_miles: float) -> str:
+        """Determine area density: dense, moderate, or sparse"""
+        area_sq_miles = math.pi * (search_radius_miles ** 2)
+        places_per_sq_mile = total_places / area_sq_miles
+        
+        print(f"Density calculation: {total_places} places in {area_sq_miles:.2f} sq miles = {places_per_sq_mile:.1f} places/sq mile")
+        
+        if places_per_sq_mile >= 10:  # Dense urban areas like Soho, Manhattan (85 places in 7.07 sq miles = 12 places/sq mile)
+            return "dense"
+        elif places_per_sq_mile >= 5:  # Moderate density suburbs/neighborhoods
+            return "moderate" 
+        else:  # Sparse rural or spread-out areas
+            return "sparse"
+    
+    def validate_route_quality(self, places: List[Dict]) -> bool:
+        """Check route quality based on actual walking time constraints that matter to users"""
         if len(places) < 2:
-            return True  # Single place itineraries always pass validation
+            return True
         
-        # Adaptive distance constraints based on search radius and place availability
-        if max_distance_miles >= 3.0:
-            max_walking_distance = 1.2  # Allow longer walks for 3+ mile searches
-            required_compliance = 0.6   # Lower compliance requirement
-        elif max_distance_miles > 2.0:
-            max_walking_distance = 1.0  # Moderate walks for 2+ mile searches
-            required_compliance = 0.65
-        else:
-            max_walking_distance = 0.7  # Standard constraint for smaller searches
-            required_compliance = 0.75
-        
-        # Further relax constraints if few places are available
-        if total_places_found < 15:
-            required_compliance = max(0.4, required_compliance - 0.15)  # Reduce by 15%, minimum 40%
-            max_walking_distance += 0.2  # Allow slightly longer walks
-        
-        valid_distances = 0
-        total_transitions = len(places) - 1
+        # Quality factors that actually matter to users
+        total_walking_time = 0
+        max_single_walk = 0
+        walking_details = []
         
         for i in range(1, len(places)):
             distance_meters = self.calculate_distance_between_places(places[i-1], places[i])
-            distance_miles = distance_meters / 1609.34  # Convert to miles
+            walking_time = self.calculate_walking_time(distance_meters)
+            distance_miles = distance_meters / 1609.34
             
-            # Check if distance is within adaptive range
-            if 0.4 <= distance_miles <= max_walking_distance:
-                valid_distances += 1
+            total_walking_time += walking_time
+            max_single_walk = max(max_single_walk, walking_time)
+            walking_details.append(f"{distance_miles:.2f}mi ({walking_time}min)")
         
-        compliance_rate = valid_distances / total_transitions
-        return compliance_rate >= required_compliance
+        # Realistic constraints that users care about
+        total_time_ok = total_walking_time <= 45  # Max 45 min total walking
+        max_walk_ok = max_single_walk <= 25       # No single walk > 25 min (adjusted from 20)
+        variety_ok = len(places) >= 3             # Minimum variety
+        
+        print(f"Route quality check:")
+        print(f"  Walking segments: {' -> '.join(walking_details)}")
+        print(f"  Total walking time: {total_walking_time}min ({'✓' if total_time_ok else '✗'} ≤45min)")
+        print(f"  Max single walk: {max_single_walk}min ({'✓' if max_walk_ok else '✗'} ≤25min)")
+        print(f"  Place variety: {len(places)} places ({'✓' if variety_ok else '✗'} ≥3)")
+        
+        result = total_time_ok and max_walk_ok and variety_ok
+        print(f"Route quality result: {'✓ PASS' if result else '✗ FAIL'}")
+        return result
     
     def estimate_itinerary_duration(self, places: List[Dict]) -> int:
         """Estimate total duration for an itinerary"""
@@ -237,44 +251,50 @@ class ItineraryGenerator:
         
         return total_duration
     
-    def optimize_stop_order(self, places: List[Dict]) -> List[Dict]:
-        """Try to reorder stops to better meet distance constraints"""
+    def optimize_stop_order(self, places: List[Dict], max_distance_miles: float = 1.5, total_places_found: int = 50) -> List[Dict]:
+        """Optimize stop order for minimal walking time and logical flow"""
         if len(places) <= 2:
             return places
         
-        # Simple greedy approach: start with first place, then always pick closest valid next place
-        optimized = [places[0]]
+        print(f"Optimizing route for {len(places)} places based on walking efficiency")
+        
+        # Simple but effective: greedy nearest-neighbor with quality weighting
+        optimized = [places[0]]  # Start with first place
         remaining = places[1:].copy()
         
         while remaining:
             current_place = optimized[-1]
             best_next = None
-            best_distance = float('inf')
+            best_score = -1
             
             for place in remaining:
                 distance_meters = self.calculate_distance_between_places(current_place, place)
-                distance_miles = distance_meters / 1609.34
+                walking_time = self.calculate_walking_time(distance_meters)
                 
-                # Prefer places within the 0.4-0.7 mile range
-                if 0.4 <= distance_miles <= 0.7 and distance_meters < best_distance:
+                # Score based on: shorter walking time = higher score, better rating = higher score
+                # Prioritize walking efficiency (70%) over place rating (30%)
+                walking_score = max(0, (20 - walking_time) / 20)  # 0-1 scale, 20min walk = 0 score
+                rating_score = (place.get('rating', 3.0) - 3.0) / 2.0  # -1 to 1 scale
+                
+                combined_score = 0.7 * walking_score + 0.3 * rating_score
+                
+                if combined_score > best_score:
                     best_next = place
-                    best_distance = distance_meters
+                    best_score = combined_score
             
-            # If no place in ideal range, pick closest
-            if best_next is None:
-                for place in remaining:
-                    distance_meters = self.calculate_distance_between_places(current_place, place)
-                    if distance_meters < best_distance:
-                        best_next = place
-                        best_distance = distance_meters
-            
+            # Always pick the best remaining option
             if best_next:
                 optimized.append(best_next)
                 remaining.remove(best_next)
             else:
-                # Fallback: just add first remaining place
-                optimized.append(remaining.pop(0))
+                # Fallback: pick closest by walking time
+                closest = min(remaining, key=lambda p: self.calculate_walking_time(
+                    self.calculate_distance_between_places(current_place, p)
+                ))
+                optimized.append(closest)
+                remaining.remove(closest)
         
+        print(f"Route optimized: prioritized walking efficiency and place quality")
         return optimized
     
     def create_stop_from_place(self, place: Dict, walking_time: int = 0) -> Dict:
@@ -353,22 +373,33 @@ class ItineraryGenerator:
         # Shuffle for variety
         random.shuffle(all_places)
         
-        # Special handling for micro-itineraries when few places available
-        print(f"Debug: total_places_found={total_places_found}, min_places_required={min_places_required}")
-        print(f"Debug: Checking micro-itinerary condition: {total_places_found} <= 10 and {min_places_required} <= 2")
-        if total_places_found <= 10 and min_places_required <= 2:
-            print(f"Debug: Micro-itinerary condition met!")
+        # Special handling for micro-itineraries when few places available OR for dense areas with quality options
+        density = self.calculate_area_density(total_places_found, max_distance_miles)
+        print(f"Debug: total_places_found={total_places_found}, min_places_required={min_places_required}, density={density}")
+        
+        micro_itinerary_condition = (total_places_found <= 10 and min_places_required <= 2) or (density == "dense" and len(all_places) >= 20)
+        print(f"Debug: Checking micro-itinerary condition: {micro_itinerary_condition}")
+        
+        if micro_itinerary_condition and density == "dense":
+            print(f"Debug: Dense area micro-itinerary - selecting quality places")
+            # For dense areas, pick 2-3 high-quality places close together
+            quality_places = sorted(all_places, key=lambda x: -(x.get('rating', 3.0)))[:min(6, len(all_places))]
+            selected_places = quality_places[:min(3, len(quality_places))]
+            if selected_places:
+                print(f"Creating dense-area micro-itinerary with {len(selected_places)} places")
+                return self.format_itinerary(selected_places, location, itinerary_index, is_micro=True)
+        elif total_places_found <= 10 and min_places_required <= 2:
+            print(f"Debug: Low-availability micro-itinerary condition met!")
             selected_places = all_places[:min(2, len(all_places))]
             if selected_places:
-                print(f"Creating micro-itinerary with {len(selected_places)} places")
+                print(f"Creating low-availability micro-itinerary with {len(selected_places)} places")
                 return self.format_itinerary(selected_places, location, itinerary_index, is_micro=True)
-            else:
-                print(f"Debug: No selected places for micro-itinerary")
-        else:
-            print(f"Debug: Micro-itinerary condition not met, proceeding with regular generation")
         
-        # Try multiple combinations to find one that meets constraints
-        max_attempts = 10
+        print(f"Debug: Proceeding with regular itinerary generation")
+        
+        # Fewer attempts needed with realistic constraints
+        max_attempts = 5 if total_places_found >= 30 else 3
+        print(f"Attempting to generate itinerary with {max_attempts} max attempts (realistic validation)")
         for attempt in range(max_attempts):
             # Force diversity by selecting from different broad types
             selected_places = []
@@ -387,8 +418,13 @@ class ItineraryGenerator:
                         type_counts[broad_type] += 1
                         break
             
-            # Second pass: fill remaining spots with variety, but limit by duration
-            target_stops = min(6, len(shuffled_places))  # Max 6 stops to stay under 135 mins
+            # Second pass: fill remaining spots with variety, adapt target based on density
+            if density == "dense":
+                target_stops = min(5, len(shuffled_places))  # Dense areas: shorter distances, more efficient
+            elif density == "moderate":
+                target_stops = min(6, len(shuffled_places))  # Moderate: current logic
+            else:  # sparse
+                target_stops = min(4, len(shuffled_places))  # Sparse: longer walks, fewer stops
             for place in shuffled_places:
                 if len(selected_places) >= target_stops:
                     break
@@ -406,31 +442,62 @@ class ItineraryGenerator:
             # Sort by distance for logical walking flow
             selected_places.sort(key=lambda x: x.get('distance_meters', 0))
             
-            # Check distance constraints with adaptive thresholds
-            if not self.validate_distance_constraints(selected_places, max_distance_miles, total_places_found):
-                # Try to reorder places to meet distance constraints
-                selected_places = self.optimize_stop_order(selected_places)
-                if not self.validate_distance_constraints(selected_places, max_distance_miles, total_places_found):
-                    continue
+            # Optimize route order first, then validate
+            selected_places = self.optimize_stop_order(selected_places, max_distance_miles, total_places_found)
             
-            # Check duration constraint (135 minutes max)
+            # Check route quality with user-focused constraints
+            if not self.validate_route_quality(selected_places):
+                print(f"Attempt {attempt + 1}: Route quality check failed, trying next combination")
+                continue
+            
+            # Duration-first optimization: prioritize creating viable itineraries
             estimated_duration = self.estimate_itinerary_duration(selected_places)
-            if estimated_duration <= 135:
+            
+            # For dense areas, be more flexible with duration (up to 180 min)
+            density = self.calculate_area_density(total_places_found, max_distance_miles)
+            max_duration = 180 if density == "dense" else 135
+            
+            if estimated_duration <= max_duration:
                 print(f"Mixed itinerary {itinerary_index} (attempt {attempt + 1}): {[self.get_broad_type(p) for p in selected_places]}")
-                print(f"Estimated duration: {estimated_duration} minutes")
+                print(f"Estimated duration: {estimated_duration} minutes (max: {max_duration})")
                 break
             else:
-                # Remove stops until under 135 minutes
-                while len(selected_places) > 3 and estimated_duration > 135:
-                    selected_places.pop()  # Remove last stop
+                # Smart trimming: remove places that add least value
+                while len(selected_places) > 2 and estimated_duration > max_duration:
+                    # Remove place with lowest rating or highest walking time penalty
+                    worst_place_idx = 0
+                    worst_score = float('inf')
+                    
+                    for idx, place in enumerate(selected_places[1:], 1):  # Skip first place
+                        # Score = rating (higher is better) - walking_time_penalty
+                        rating = place.get('rating', 3.0)
+                        prev_distance = self.calculate_distance_between_places(selected_places[idx-1], place) if idx > 0 else 0
+                        walking_penalty = self.calculate_walking_time(prev_distance) * 0.5  # Convert to score penalty
+                        
+                        score = rating - (walking_penalty / 10)  # Lower score = worse
+                        if score < worst_score:
+                            worst_score = score
+                            worst_place_idx = idx
+                    
+                    selected_places.pop(worst_place_idx)
                     estimated_duration = self.estimate_itinerary_duration(selected_places)
                 
-                if estimated_duration <= 135:
-                    print(f"Mixed itinerary {itinerary_index} (attempt {attempt + 1}, trimmed): {[self.get_broad_type(p) for p in selected_places]}")
+                if estimated_duration <= max_duration and len(selected_places) >= 2:
+                    print(f"Mixed itinerary {itinerary_index} (attempt {attempt + 1}, optimized): {[self.get_broad_type(p) for p in selected_places]}")
                     print(f"Final duration: {estimated_duration} minutes")
                     break
+                else:
+                    print(f"Attempt {attempt + 1}: Could not optimize duration under {max_duration} minutes")
+                    continue
         else:
             print(f"Could not create compliant itinerary after {max_attempts} attempts")
+            # Fallback: create simple high-quality itinerary if we have good places
+            if len(all_places) >= 3:
+                print(f"Fallback: creating simple high-quality 3-place itinerary")
+                best_places = sorted(all_places, key=lambda x: -(x.get('rating', 3.0)))[:3]
+                # Sort by distance for logical flow
+                best_places.sort(key=lambda x: x.get('distance_meters', 0))
+                return self.format_itinerary(best_places, location, itinerary_index, is_micro=False)
             return None
         
         return self.format_itinerary(selected_places, location, itinerary_index, is_micro=False)
@@ -501,6 +568,109 @@ class ItineraryGenerator:
                 itineraries.append(itinerary)
         
         return itineraries[:5]  # Return up to 5 mixed itineraries
+    
+    def generate_custom_itineraries(self, search_results: Dict, location: str, max_distance_miles: float = 1.5) -> List[Dict]:
+        """Generate custom itineraries with ZERO constraints - bulletproof method"""
+        places_by_category = search_results.get('results_by_category', {})
+        
+        if not places_by_category:
+            print("No places found in search results")
+            return []
+        
+        print(f"🚀 CUSTOM ITINERARY GENERATION - NO CONSTRAINTS")
+        print(f"Location: {location}")
+        print(f"Max distance: {max_distance_miles} miles")
+        
+        # Flatten all places into single list
+        all_places = []
+        max_distance_meters = max_distance_miles * 1609.34
+        
+        for category_name, places in places_by_category.items():
+            print(f"Category '{category_name}': {len(places)} places")
+            for place in places:
+                # Only filter by user's max distance
+                distance_meters = place.get('distance_meters', 0)
+                if distance_meters <= max_distance_meters:
+                    all_places.append(place)
+        
+        print(f"Total places after distance filter: {len(all_places)}")
+        
+        if len(all_places) < 3:
+            print(f"❌ Not enough places: {len(all_places)} (need minimum 3)")
+            return []
+        
+        # Create 3 different itineraries
+        itineraries = []
+        for i in range(3):
+            print(f"\n--- Creating Custom Itinerary {i+1} ---")
+            itinerary = self.create_bulletproof_custom_itinerary(all_places, location, i)
+            if itinerary:
+                itineraries.append(itinerary)
+                print(f"✅ Custom itinerary {i+1} created successfully")
+            else:
+                print(f"❌ Failed to create custom itinerary {i+1}")
+        
+        print(f"\n🎉 Generated {len(itineraries)} custom itineraries")
+        return itineraries
+    
+    def create_bulletproof_custom_itinerary(self, all_places: List[Dict], location: str, itinerary_index: int) -> Dict:
+        """Create custom itinerary with ZERO validation - guaranteed to work"""
+        
+        # Shuffle for variety
+        available_places = all_places.copy()
+        random.shuffle(available_places)
+        
+        # Select 4-5 places (or all if less than 5)
+        num_stops = min(5, len(available_places))
+        if num_stops < 3:
+            num_stops = len(available_places)  # Use whatever we have
+        
+        selected_places = available_places[:num_stops]
+        
+        # Sort by distance from origin for logical walking order
+        selected_places.sort(key=lambda x: x.get('distance_meters', 0))
+        
+        print(f"Selected {len(selected_places)} places:")
+        for i, place in enumerate(selected_places):
+            name = place.get('name', 'Unknown')
+            distance = place.get('distance_miles', 0)
+            category = self.categorize_place(place)
+            print(f"  {i+1}. {name} ({category}) - {distance} miles")
+        
+        # Create stops directly - NO VALIDATION
+        stops = []
+        for i, place in enumerate(selected_places):
+            # Calculate walking time to this stop (0 for first stop)
+            if i == 0:
+                walking_time = 0
+            else:
+                prev_place = selected_places[i-1]
+                distance_meters = self.calculate_distance_between_places(prev_place, place)
+                walking_time = self.calculate_walking_time(distance_meters)
+            
+            # Create stop
+            stop = self.create_stop_from_place(place, walking_time)
+            stops.append(stop)
+        
+        # Calculate total duration
+        total_duration = 0
+        for i, stop in enumerate(stops):
+            total_duration += stop['walking_time_minutes']
+            # Add visit time (30-45 minutes per stop)
+            visit_time = random.randint(30, 45)
+            total_duration += visit_time
+        
+        # Create itinerary
+        itinerary = {
+            'id': f"custom-itinerary-{uuid.uuid4()}",
+            'title': f"Custom {location} Experience {itinerary_index + 1}",
+            'description': f"A personalized itinerary in {location} with your selected categories.",
+            'duration_minutes': total_duration,
+            'stops': stops
+        }
+        
+        print(f"Itinerary duration: {total_duration} minutes")
+        return itinerary
     
     def generate_alternative_category_spot(
         self, 
