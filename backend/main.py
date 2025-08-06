@@ -6,7 +6,7 @@ import os
 import random
 from dotenv import load_dotenv
 
-from localwander_engine import ChaloSearchEngine
+from new_engine import ChaloSearchEngine
 from itinerary_generator import ItineraryGenerator
 from category_exclusion_manager import CategoryExclusionManager
 
@@ -18,8 +18,8 @@ app = FastAPI(title="Chalo API", version="1.0.0")
 # Enable CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3001"],  # Vite dev servers
-    allow_credentials=True,
+    allow_origins=["*"],  # Allow all origins (development mode)
+    allow_credentials=False,  # Must be False when using allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -75,6 +75,11 @@ class RefreshCategoryRequest(BaseModel):
     current_category: str
     excluded_spot_ids: List[str] = []
 
+class CustomTripRequest(BaseModel):
+    location: str
+    categories: List[str]  # List of category IDs like ['cafe', 'restaurant', 'park']
+    max_distance_miles: float = 1.5
+
 @app.get("/")
 async def root():
     return {
@@ -105,21 +110,16 @@ async def get_itineraries(request: LocationRequest):
         
         print(f"Filters - Price: {max_price_level or 'Any'}, Distance: {max_distance_miles} miles")
         
-        # Create cache key that includes distance filter
-        cache_key = f"{location}_{max_distance_miles}"
+        # CACHING DISABLED FOR TESTING - Always perform fresh search
+
         
-        # Check cache first
-        if cache_key in search_results_cache:
-            print(f"Using cached search results for {cache_key}")
-            search_results = search_results_cache[cache_key]
-        else:
-            # Search for places using Chalo engine with custom radius
-            search_results = search_engine.search_all_categories(location, max_distance_miles)
-            
-            # Cache search results for refresh functionality
-            search_results_cache[cache_key] = search_results
-            # Also cache with location key for backward compatibility
-            search_results_cache[location] = search_results
+        # Always search fresh (no cache check)
+        search_results = search_engine.search_all_categories(location, max_distance_miles)
+        
+        # Cache results for refresh functionality (but we don't read from cache first)
+        cache_key = f"{location}_{max_distance_miles}"
+        search_results_cache[cache_key] = search_results
+        search_results_cache[location] = search_results
         
         # Generate itineraries from search results with filters
         itineraries = itinerary_generator.generate_itineraries(
@@ -367,6 +367,92 @@ async def get_testing_status():
         "testing_mode": search_engine.testing_mode,
         "data_file": search_engine.testing_data_file if search_engine.testing_mode else None
     }
+
+@app.post("/api/custom-trips", response_model=ItineraryResponse)
+async def get_custom_trips(request: CustomTripRequest):
+    """
+    Generate custom trips based on user-selected categories and distance preferences.
+    Uses the new_engine.py functionality for category-specific searches.
+    """
+    try:
+        if not request.location or len(request.location.strip()) < 2:
+            raise HTTPException(status_code=400, detail="Location must be at least 2 characters long")
+        
+        if not request.categories or len(request.categories) == 0:
+            raise HTTPException(status_code=400, detail="At least one category must be selected")
+        
+        location = request.location.strip()
+        max_distance_miles = request.max_distance_miles or 1.5
+        
+        print(f"Generating custom trips for: {location}")
+        print(f"Categories: {request.categories}")
+        print(f"Distance: {max_distance_miles} miles")
+        
+        # CACHING DISABLED FOR TESTING - Always perform fresh search
+
+        
+        # Convert category IDs to search queries
+        category_queries = []
+        category_mapping = {
+            'cafe': 'cafes and bakeries near me',
+            'restaurant': 'restaurants near me',
+            'park': 'parks near me',
+            'museum': 'museums near me',
+            'art_gallery': 'galleries near me',
+            'tourist_attraction': 'tourist attractions near me'
+        }
+        
+        for category_id in request.categories:
+            if category_id in category_mapping:
+                category_queries.append(category_mapping[category_id])
+        
+        if not category_queries:
+            raise HTTPException(status_code=400, detail="Invalid categories selected")
+        
+        # Always search fresh (no cache check)
+        search_results = search_engine.search_specific_categories(
+            location, category_queries, max_distance_miles
+        )
+        
+        # Cache results for refresh functionality (but we don't read from cache first)
+        cache_key = f"{location}_{','.join(sorted(request.categories))}_{max_distance_miles}"
+        search_results_cache[cache_key] = search_results
+        # Also cache with location key for refresh endpoints
+        search_results_cache[location] = search_results
+        
+        # Generate itineraries from search results
+        itineraries = itinerary_generator.generate_itineraries(
+            search_results, location, None, None, max_distance_miles
+        )
+        
+        if not itineraries:
+            error_msg = f"Could not find enough places to create custom trips for '{location}'"
+            error_msg += f" with selected categories within {max_distance_miles} miles"
+            error_msg += ". Try adjusting your categories or distance range."
+            
+            raise HTTPException(status_code=404, detail=error_msg)
+        
+        # Limit to 3 itineraries for custom trips
+        limited_itineraries = itineraries[:3]
+        
+        # Create sources from search results
+        sources = itinerary_generator.create_sources_from_search(search_results)
+        
+        print(f"Generated {len(limited_itineraries)} custom trips with {len(sources)} sources")
+        
+        return ItineraryResponse(
+            itineraries=limited_itineraries,
+            sources=sources
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error generating custom trips: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail="An error occurred while generating custom trips. Please try again."
+        )
 
 if __name__ == "__main__":
     import uvicorn

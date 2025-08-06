@@ -15,7 +15,7 @@ const MapEmbed: React.FC<MapEmbedProps> = ({ stops, location }) => {
     // Fetch API key from backend
     const fetchApiKey = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/maps-config');
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/maps-config`);
         if (response.ok) {
           const data = await response.json();
           setApiKey(data.maps_api_key);

@@ -314,7 +314,7 @@ class ItineraryGenerator:
     def create_mixed_itinerary(self, places_by_category: Dict, location: str, itinerary_index: int, 
                               max_price_level: Optional[str] = None, max_distance_miles: float = 1.5) -> Optional[Dict]:
         """Create a naturally mixed itinerary with diverse place types"""
-        print(f"DEBUG: create_mixed_itinerary called for {location} with {max_distance_miles} miles")
+
         # Convert max_distance_miles to meters
         max_distance_meters = max_distance_miles * 1609.34
         
@@ -331,14 +331,14 @@ class ItineraryGenerator:
         
         # Adaptive minimum place threshold based on search radius and availability
         total_places_found = len(all_places)
-        print(f"Debug: Processing {total_places_found} places with {max_distance_miles} mile radius")
+
         
         if max_distance_miles >= 3.0:
             min_places_required = 1  # Allow micro-itineraries for large search areas
-            print(f"Debug: Using min_places_required=1 for 3+ mile search")
+
         elif total_places_found < 6:
             min_places_required = 1  # Allow single-stop itineraries for very sparse areas
-            print(f"Debug: Using min_places_required=1 for sparse area")
+
         elif total_places_found < 10:
             min_places_required = 2  # Relax for sparse areas
             print(f"Debug: Using min_places_required=2 for low-density area")
@@ -553,7 +553,7 @@ class ItineraryGenerator:
                     continue
                 
                 # Only include places within itinerary radius
-                from localwander_engine import ITINERARY_RADIUS_METERS
+                from new_engine import ITINERARY_RADIUS_METERS
                 if place.get('distance_meters', 0) <= ITINERARY_RADIUS_METERS:
                     available_places.append(place)
         

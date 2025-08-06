@@ -146,7 +146,7 @@ class ItineraryGenerator:
     
     def create_mixed_itinerary(self, places_by_category: Dict, location: str, itinerary_index: int) -> Optional[Dict]:
         """Create a naturally mixed itinerary with diverse place types"""
-        from localwander_engine import ITINERARY_RADIUS_METERS
+        from new_engine import ITINERARY_RADIUS_METERS
         
         # Pool all places and ensure they're within itinerary radius
         all_places = []

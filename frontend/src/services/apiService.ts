@@ -1,6 +1,6 @@
 import { Itinerary, GroundingChunk, Stop } from '../types';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 interface ApiResponse {
     itineraries: Itinerary[];
@@ -155,6 +155,74 @@ export const refreshCategory = async (
     } catch (error) {
         console.error('Error refreshing category:', error);
         throw error;
+    }
+};
+
+export const getCustomTrips = async (
+    location: string,
+    categories: string[],
+    maxDistanceMiles: number
+): Promise<ApiResponse> => {
+    try {
+        const requestBody = {
+            location,
+            categories,
+            max_distance_miles: maxDistanceMiles
+        };
+
+        const response = await fetch(`${API_BASE_URL}/api/custom-trips`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+            // Try to get error details from response
+            let errorMessage = `HTTP error! status: ${response.status}`;
+
+            try {
+                const errorData: ErrorResponse = await response.json();
+                errorMessage = errorData.detail || errorMessage;
+            } catch {
+                // If we can't parse error response, use default message
+            }
+
+            if (response.status === 400) {
+                throw new Error(errorMessage);
+            }
+            if (response.status === 404) {
+                throw new Error(errorMessage);
+            }
+            if (response.status === 429) {
+                throw new Error('Too many requests. Please try again later.');
+            }
+            if (response.status === 500) {
+                throw new Error('Server error occurred. Please try again.');
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        const data: ApiResponse = await response.json();
+
+        if (!data.itineraries || !Array.isArray(data.itineraries)) {
+            throw new Error('Invalid data format received from API.');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error fetching custom trips:', error);
+
+        if (error instanceof Error) {
+            if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                throw new Error('Unable to connect to the server. Please ensure the backend is running on port 8000.');
+            }
+            throw error;
+        }
+
+        throw new Error('Failed to generate custom trips from the recommendation engine.');
     }
 };
 
