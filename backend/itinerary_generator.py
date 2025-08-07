@@ -373,29 +373,25 @@ class ItineraryGenerator:
         # Shuffle for variety
         random.shuffle(all_places)
         
-        # Special handling for micro-itineraries when few places available OR for dense areas with quality options
+        # Calculate area density for adaptive target stops logic
         density = self.calculate_area_density(total_places_found, max_distance_miles)
         print(f"Debug: total_places_found={total_places_found}, min_places_required={min_places_required}, density={density}")
         
-        micro_itinerary_condition = (total_places_found <= 10 and min_places_required <= 2) or (density == "dense" and len(all_places) >= 20)
-        print(f"Debug: Checking micro-itinerary condition: {micro_itinerary_condition}")
+        # REMOVED: Problematic micro-itinerary logic that forced 3-spot itineraries for dense areas
+        # This allows the original adaptive target_stops logic to function as designed:
+        # - Dense areas: 5 stops
+        # - Moderate areas: 6 stops  
+        # - Sparse areas: 4 stops
         
-        if micro_itinerary_condition and density == "dense":
-            print(f"Debug: Dense area micro-itinerary - selecting quality places")
-            # For dense areas, pick 2-3 high-quality places close together
-            quality_places = sorted(all_places, key=lambda x: -(x.get('rating', 3.0)))[:min(6, len(all_places))]
-            selected_places = quality_places[:min(3, len(quality_places))]
-            if selected_places:
-                print(f"Creating dense-area micro-itinerary with {len(selected_places)} places")
-                return self.format_itinerary(selected_places, location, itinerary_index, is_micro=True)
-        elif total_places_found <= 10 and min_places_required <= 2:
-            print(f"Debug: Low-availability micro-itinerary condition met!")
+        # Keep only low-availability micro-itinerary logic for truly sparse areas
+        if total_places_found <= 10 and min_places_required <= 2 and density != "dense":
+            print(f"Debug: Low-availability micro-itinerary condition met for non-dense area!")
             selected_places = all_places[:min(2, len(all_places))]
             if selected_places:
                 print(f"Creating low-availability micro-itinerary with {len(selected_places)} places")
                 return self.format_itinerary(selected_places, location, itinerary_index, is_micro=True)
         
-        print(f"Debug: Proceeding with regular itinerary generation")
+        print(f"Debug: Proceeding with regular itinerary generation using adaptive target_stops")
         
         # Fewer attempts needed with realistic constraints
         max_attempts = 5 if total_places_found >= 30 else 3
@@ -569,15 +565,471 @@ class ItineraryGenerator:
         
         return itineraries[:5]  # Return up to 5 mixed itineraries
     
-    def generate_custom_itineraries(self, search_results: Dict, location: str, max_distance_miles: float = 1.5) -> List[Dict]:
-        """Generate custom itineraries with ZERO constraints - bulletproof method"""
+    def generate_custom_itineraries(self, search_results: Dict, location: str, max_distance_miles: float = 1.5, user_categories: List[str] = None) -> List[Dict]:
+        """Generate custom itineraries using Preference Hotspot Clustering"""
         places_by_category = search_results.get('results_by_category', {})
         
         if not places_by_category:
             print("No places found in search results")
             return []
         
-        print(f"🚀 CUSTOM ITINERARY GENERATION - NO CONSTRAINTS")
+        try:
+            print(f"🎯 PREFERENCE HOTSPOT CLUSTERING - User-Centric Custom Itineraries")
+            print(f"Location: {location}")
+            print(f"Max distance: {max_distance_miles} miles")
+            
+            # Try new hotspot clustering approach
+            return self.generate_preference_hotspot_itineraries(search_results, location, max_distance_miles, user_categories)
+            
+        except Exception as e:
+            print(f"⚠️ Hotspot clustering failed: {e}")
+            print("🔄 Falling back to bulletproof method")
+            
+            # Fall back to original bulletproof method
+            return self.generate_bulletproof_custom_itineraries(search_results, location, max_distance_miles)
+    
+    def generate_preference_hotspot_itineraries(self, search_results: Dict, location: str, max_distance_miles: float, user_categories: List[str] = None) -> List[Dict]:
+        """Generate itineraries using Preference Hotspot Clustering algorithm"""
+        places_by_category = search_results.get('results_by_category', {})
+        
+        # Flatten all places and filter by distance
+        all_places = []
+        max_distance_meters = max_distance_miles * 1609.34
+        
+        # Category mapping for preference detection
+        category_mapping = {
+            'cafe': ['cafes and bakeries near me', 'cafe'],
+            'restaurant': ['restaurants near me', 'restaurant'],
+            'park': ['parks near me', 'park'],
+            'museum': ['museums near me', 'museum'],
+            'art_gallery': ['galleries near me', 'art_gallery', 'gallery'],
+            'tourist_attraction': ['tourist attractions near me', 'tourist_attraction']
+        }
+        
+        # Create reverse mapping for quick lookup
+        search_query_to_user_category = {}
+        for user_cat, search_queries in category_mapping.items():
+            for query in search_queries:
+                search_query_to_user_category[query] = user_cat
+        
+        print(f"User selected categories: {user_categories}")
+        
+        for category_name, places in places_by_category.items():
+            print(f"Category '{category_name}': {len(places)} places")
+            
+            # Determine if this category matches user preferences
+            is_user_preference = False
+            if user_categories:
+                # Check if category_name maps to any user-selected category
+                user_category = search_query_to_user_category.get(category_name)
+                if user_category and user_category in user_categories:
+                    is_user_preference = True
+                    print(f"  ✅ '{category_name}' matches user preference '{user_category}'")
+                else:
+                    print(f"  ❌ '{category_name}' does not match user preferences")
+            
+            for place in places:
+                distance_meters = place.get('distance_meters', 0)
+                if distance_meters <= max_distance_meters:
+                    # Mark user-preferred places correctly
+                    place['user_preference'] = is_user_preference
+                    place['search_category'] = category_name  # Track original search category
+                    all_places.append(place)
+        
+        print(f"Total places after distance filter: {len(all_places)}")
+        
+        if len(all_places) < 4:
+            print(f"❌ Not enough places for clustering: {len(all_places)} (need minimum 4)")
+            return []
+        
+        # Phase 1: Create geographic grid and find hotspots
+        hotspots = self.find_preference_hotspots(all_places, max_distance_miles)
+        print(f"Found {len(hotspots)} preference hotspots")
+        
+        if not hotspots:
+            print("❌ No suitable hotspots found")
+            return []
+        
+        # Phase 2: Create clusters from hotspots  
+        clusters = []
+        for hotspot in hotspots[:5]:  # Limit to top 5 hotspots
+            cluster = self.create_preference_cluster(hotspot, all_places)
+            if cluster:
+                clusters.append(cluster)
+        
+        print(f"Created {len(clusters)} valid clusters")
+        
+        if not clusters:
+            print("❌ No valid clusters created")
+            return []
+        
+        # Phase 3: Generate itineraries from clusters with category diversity
+        itineraries = []
+        for i, cluster in enumerate(clusters[:3]):  # Generate up to 3 itineraries
+            # Enforce category diversity within each cluster
+            diverse_cluster = self.enforce_category_diversity(cluster, user_categories)
+            if diverse_cluster:
+                itinerary = self.generate_cluster_itinerary(diverse_cluster, location, i)
+                if itinerary:
+                    itineraries.append(itinerary)
+                    print(f"✅ Generated diverse cluster itinerary {i+1} with {len(diverse_cluster)} places")
+        
+        print(f"🎉 Generated {len(itineraries)} preference-focused itineraries")
+        
+        # Fallback: If we couldn't generate any itineraries, create simple mixed ones
+        if len(itineraries) == 0:
+            print("⚠️ No hotspot itineraries generated, using simple mixed approach")
+            fallback_itineraries = self.generate_simple_mixed_custom_itineraries(
+                all_places, location, user_categories, max_distance_miles
+            )
+            itineraries.extend(fallback_itineraries)
+        elif len(itineraries) < 2:
+            print("⚠️ Only one hotspot itinerary, adding simple mixed itineraries")
+            fallback_itineraries = self.generate_simple_mixed_custom_itineraries(
+                all_places, location, user_categories, max_distance_miles
+            )
+            itineraries.extend(fallback_itineraries)
+        
+        return itineraries[:3]  # Return max 3 itineraries
+    
+    def find_preference_hotspots(self, all_places: List[Dict], search_radius_miles: float) -> List[Dict]:
+        """Phase 1: Find geographic hotspots with high preference density"""
+        if not all_places:
+            return []
+        
+        # Calculate bounding box of all places
+        lats = [p.get('latitude', 0) for p in all_places]
+        lngs = [p.get('longitude', 0) for p in all_places]
+        
+        min_lat, max_lat = min(lats), max(lats)
+        min_lng, max_lng = min(lngs), max(lngs)
+        
+        # Create fine-grained grid (0.08 mile cells ≈ 1-2 blocks)
+        grid_size_miles = 0.08
+        grid_size_degrees = grid_size_miles / 69.0  # Rough conversion
+        
+        hotspots = []
+        
+        # Scan grid cells
+        lat = min_lat
+        while lat <= max_lat:
+            lng = min_lng
+            while lng <= max_lng:
+                # Count places in this grid cell
+                cell_places = []
+                preference_places = []
+                
+                for place in all_places:
+                    place_lat = place.get('latitude', 0)
+                    place_lng = place.get('longitude', 0)
+                    
+                    if (lat <= place_lat <= lat + grid_size_degrees and 
+                        lng <= place_lng <= lng + grid_size_degrees):
+                        cell_places.append(place)
+                        if place.get('user_preference', False):
+                            preference_places.append(place)
+                
+                # Score this cell
+                if len(cell_places) >= 2:  # Reduced minimum density threshold
+                    preference_ratio = len(preference_places) / len(cell_places)
+                    density_score = len(cell_places) / (grid_size_miles ** 2)
+                    
+                    # Combined score: 70% preference match + 30% density
+                    combined_score = preference_ratio * 0.7 + min(density_score / 20, 1.0) * 0.3
+                    
+                    if preference_ratio >= 0.5:  # Reduced to 50% user preferences
+                        hotspots.append({
+                            'center_lat': lat + grid_size_degrees/2,
+                            'center_lng': lng + grid_size_degrees/2,
+                            'score': combined_score,
+                            'total_places': len(cell_places),
+                            'preference_places': len(preference_places),
+                            'preference_ratio': preference_ratio
+                        })
+                
+                lng += grid_size_degrees
+            lat += grid_size_degrees
+        
+        # Sort hotspots by score and return top candidates
+        hotspots.sort(key=lambda x: x['score'], reverse=True)
+        
+        print(f"Grid analysis found {len(hotspots)} potential hotspots")
+        for i, hotspot in enumerate(hotspots[:5]):
+            print(f"  Hotspot {i+1}: Score={hotspot['score']:.2f}, "
+                  f"Places={hotspot['total_places']}, "
+                  f"Preferences={hotspot['preference_places']} ({hotspot['preference_ratio']:.1%})")
+        
+        return hotspots
+    
+    def create_preference_cluster(self, hotspot: Dict, all_places: List[Dict]) -> Optional[List[Dict]]:
+        """Phase 2: Create a cluster around a hotspot"""
+        center_lat = hotspot['center_lat']
+        center_lng = hotspot['center_lng']
+        
+        # Cluster radius: 0.15 miles (2-3 minute walks max)
+        cluster_radius_miles = 0.15
+        cluster_radius_meters = cluster_radius_miles * 1609.34
+        
+        cluster_places = []
+        
+        for place in all_places:
+            place_lat = place.get('latitude', 0)
+            place_lng = place.get('longitude', 0)
+            
+            # Calculate distance to cluster center using Haversine
+            distance_meters = self.calculate_distance_between_coordinates(
+                center_lat, center_lng, place_lat, place_lng
+            )
+            
+            if distance_meters <= cluster_radius_meters:
+                cluster_places.append(place)
+        
+        # Quality gates for cluster
+        if len(cluster_places) < 3:  # Reduced minimum cluster size
+            return None
+            
+        preference_places = [p for p in cluster_places if p.get('user_preference', False)]
+        preference_ratio = len(preference_places) / len(cluster_places)
+        
+        if preference_ratio < 0.5:  # Reduced to 50%+ user preferences
+            return None
+        
+        print(f"Created cluster: {len(cluster_places)} places, "
+              f"{len(preference_places)} preferences ({preference_ratio:.1%})")
+        
+        return cluster_places
+    
+    def calculate_distance_between_coordinates(self, lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+        """Calculate distance in meters between two coordinates using Haversine formula"""
+        import math
+        
+        R = 6371000  # Earth's radius in meters
+        
+        lat1_rad = math.radians(lat1)
+        lat2_rad = math.radians(lat2)
+        delta_lat = math.radians(lat2 - lat1)
+        delta_lng = math.radians(lng2 - lng1)
+        
+        a = (math.sin(delta_lat / 2) ** 2 + 
+             math.cos(lat1_rad) * math.cos(lat2_rad) * 
+             math.sin(delta_lng / 2) ** 2)
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        
+        return R * c
+    
+    def enforce_category_diversity(self, cluster_places: List[Dict], user_categories: List[str]) -> List[Dict]:
+        """Enforce category diversity within a cluster to ensure mixed itineraries"""
+        if not cluster_places or not user_categories:
+            return cluster_places
+        
+        print(f"Enforcing category diversity for {len(cluster_places)} places")
+        
+        # Group places by their categories
+        places_by_category = {}
+        for place in cluster_places:
+            category = self.categorize_place(place)
+            broad_type = self.get_broad_type(place)
+            
+            # Use broad type as the key for better mixing
+            if broad_type not in places_by_category:
+                places_by_category[broad_type] = []
+            places_by_category[broad_type].append(place)
+        
+        print(f"Categories found: {list(places_by_category.keys())}")
+        
+        # Ensure we have at least 2 different categories for diversity
+        if len(places_by_category) < 2:
+            print("⚠️ Only one category type found - cannot enforce diversity")
+            return cluster_places
+        
+        # Select places to ensure category diversity
+        diverse_places = []
+        max_per_category = 2  # Maximum 2 places per category type
+        
+        # First pass: Get one place from each category (prioritize user preferences)
+        for broad_type, places in places_by_category.items():
+            # Sort by user preference first, then by rating
+            places.sort(key=lambda x: (
+                -1 if x.get('user_preference', False) else 0,  # User preferences first
+                -(x.get('rating', 0))  # Then by rating
+            ))
+            
+            if places:
+                diverse_places.append(places[0])
+                print(f"  Added from {broad_type}: {places[0].get('name', 'Unknown')}")
+        
+        # Second pass: Fill remaining spots while maintaining diversity
+        target_size = min(6, len(cluster_places))  # Target 4-6 places
+        category_counts = {broad_type: 1 for broad_type in places_by_category.keys()}
+        
+        for broad_type, places in places_by_category.items():
+            for place in places[1:]:  # Skip first place (already added)
+                if len(diverse_places) >= target_size:
+                    break
+                if category_counts[broad_type] < max_per_category:
+                    diverse_places.append(place)
+                    category_counts[broad_type] += 1
+                    print(f"  Added additional from {broad_type}: {place.get('name', 'Unknown')}")
+        
+        # Final check: ensure we have good category mix
+        final_categories = set(self.get_broad_type(p) for p in diverse_places)
+        user_preference_count = sum(1 for p in diverse_places if p.get('user_preference', False))
+        
+        print(f"Final diversity: {len(final_categories)} categories, {user_preference_count}/{len(diverse_places)} user preferences")
+        
+        return diverse_places
+    
+    def generate_cluster_itinerary(self, cluster_places: List[Dict], location: str, itinerary_index: int) -> Dict:
+        """Phase 3: Generate optimized itinerary from cluster"""
+        if not cluster_places:
+            return None
+        
+        # Optimize route within cluster (simple distance-based for now)
+        ordered_places = self.optimize_cluster_route(cluster_places)
+        
+        # Issue 1 Fix: Random variation in stop count (4-7 stops)
+        min_stops = max(4, min(len(ordered_places), 4))  # At least 4, but not more than available
+        max_stops = min(7, len(ordered_places))  # At most 7, but not more than available
+        target_stops = random.randint(min_stops, max_stops) if max_stops > min_stops else min_stops
+        
+        # Issue 4 Fix: Enforce minimum 450m walking distance between stops
+        selected_places = self.enforce_walking_distances(ordered_places, target_stops, min_walk_meters=450)
+        
+        print(f"Selected {len(selected_places)} places for cluster itinerary:")
+        for i, place in enumerate(selected_places):
+            name = place.get('name', 'Unknown')
+            category = self.categorize_place(place)
+            is_preference = '🎯' if place.get('user_preference', False) else '📍'
+            print(f"  {i+1}. {is_preference} {name} ({category})")
+        
+        # Create stops with walking times
+        stops = []
+        total_duration = 0
+        
+        for i, place in enumerate(selected_places):
+            # Calculate walking time to this stop (0 for first stop)
+            if i == 0:
+                walking_time = 0
+            else:
+                prev_place = selected_places[i-1]
+                distance_meters = self.calculate_distance_between_places(prev_place, place)
+                walking_time = self.calculate_walking_time(distance_meters)
+            
+            stop = self.create_stop_from_place(place, walking_time)
+            stops.append(stop)
+            
+            # Add walking time + visit time (25-40 minutes for focused exploration)
+            visit_time = random.randint(25, 40)
+            total_duration += walking_time + visit_time
+        
+        # Create focused itinerary
+        preference_count = sum(1 for p in selected_places if p.get('user_preference', False))
+        
+        titles = [
+            f"Focused {location} Experience",
+            f"Deep Dive: {location}",
+            f"Neighborhood Explorer: {location}",
+            f"Local Gems in {location}",
+            f"Curated {location} Journey"
+        ]
+        
+        title = titles[itinerary_index % len(titles)]
+        description = f"An intensive exploration of {location} focusing on your preferences. {preference_count}/{len(selected_places)} stops match your selections."
+        
+        return {
+            'id': f"preference-cluster-{uuid.uuid4()}",
+            'title': title,
+            'description': description,
+            'duration_minutes': total_duration,
+            'stops': stops
+        }
+    
+    def optimize_cluster_route(self, cluster_places: List[Dict]) -> List[Dict]:
+        """Optimize walking route within cluster using greedy nearest-neighbor"""
+        if len(cluster_places) <= 2:
+            return cluster_places
+        
+        # Start with highest-rated place
+        remaining = cluster_places.copy()
+        remaining.sort(key=lambda x: x.get('rating', 0), reverse=True)
+        
+        route = [remaining.pop(0)]  # Start with best place
+        
+        # Greedy nearest-neighbor for remaining places
+        while remaining:
+            current_place = route[-1]
+            
+            # Find closest remaining place
+            closest_place = min(remaining, key=lambda p: 
+                self.calculate_distance_between_places(current_place, p))
+            
+            route.append(closest_place)
+            remaining.remove(closest_place)
+        
+        return route
+    
+    def enforce_walking_distances(self, ordered_places: List[Dict], target_stops: int, min_walk_meters: float = 450) -> List[Dict]:
+        """Enforce minimum walking distance between consecutive stops"""
+        if len(ordered_places) <= 1:
+            return ordered_places
+        
+        if target_stops >= len(ordered_places):
+            # If we want all places, return them all (can't enforce distance)
+            return ordered_places[:target_stops]
+        
+        # Start with the best-rated place
+        selected = [ordered_places[0]]
+        remaining = ordered_places[1:]
+        
+        print(f"Enforcing minimum {min_walk_meters}m walking distance between {target_stops} stops")
+        
+        while len(selected) < target_stops and remaining:
+            current_place = selected[-1]
+            
+            # Find places that are far enough from the last selected place
+            valid_next = []
+            for place in remaining:
+                distance_meters = self.calculate_distance_between_places(current_place, place)
+                if distance_meters >= min_walk_meters:
+                    valid_next.append((place, distance_meters))
+            
+            if valid_next:
+                # Sort by distance and pick the closest among valid options (not too close, not too far)
+                valid_next.sort(key=lambda x: x[1])  # Sort by distance
+                next_place = valid_next[0][0]  # Pick the closest valid option
+                
+                selected.append(next_place)
+                remaining.remove(next_place)
+                
+                distance_km = valid_next[0][1] / 1000
+                print(f"  Added: {next_place.get('name', 'Unknown')} ({distance_km:.2f}km walk)")
+                
+            else:
+                # No valid places remaining at required distance - break to avoid infinite loop
+                print(f"  No more places available at minimum {min_walk_meters}m distance")
+                break
+        
+        # If we couldn't get enough places at the required distance, fill with closest remaining
+        while len(selected) < target_stops and remaining and len(selected) < len(ordered_places):
+            # Add closest remaining place (relaxing distance requirement)
+            current_place = selected[-1]
+            closest = min(remaining, key=lambda p: self.calculate_distance_between_places(current_place, p))
+            distance_meters = self.calculate_distance_between_places(current_place, closest)
+            
+            selected.append(closest)
+            remaining.remove(closest)
+            
+            distance_km = distance_meters / 1000
+            print(f"  Added (relaxed): {closest.get('name', 'Unknown')} ({distance_km:.2f}km walk)")
+        
+        print(f"Final selection: {len(selected)} places with enforced walking distances")
+        return selected
+    
+    def generate_bulletproof_custom_itineraries(self, search_results: Dict, location: str, max_distance_miles: float) -> List[Dict]:
+        """Fallback method: Generate bulletproof custom itineraries (original logic)"""
+        places_by_category = search_results.get('results_by_category', {})
+        
+        print(f"🔄 FALLBACK: Bulletproof custom itinerary generation")
         print(f"Location: {location}")
         print(f"Max distance: {max_distance_miles} miles")
         
@@ -586,14 +1038,10 @@ class ItineraryGenerator:
         max_distance_meters = max_distance_miles * 1609.34
         
         for category_name, places in places_by_category.items():
-            print(f"Category '{category_name}': {len(places)} places")
             for place in places:
-                # Only filter by user's max distance
                 distance_meters = place.get('distance_meters', 0)
                 if distance_meters <= max_distance_meters:
                     all_places.append(place)
-        
-        print(f"Total places after distance filter: {len(all_places)}")
         
         if len(all_places) < 3:
             print(f"❌ Not enough places: {len(all_places)} (need minimum 3)")
@@ -602,16 +1050,117 @@ class ItineraryGenerator:
         # Create 3 different itineraries
         itineraries = []
         for i in range(3):
-            print(f"\n--- Creating Custom Itinerary {i+1} ---")
             itinerary = self.create_bulletproof_custom_itinerary(all_places, location, i)
             if itinerary:
                 itineraries.append(itinerary)
-                print(f"✅ Custom itinerary {i+1} created successfully")
-            else:
-                print(f"❌ Failed to create custom itinerary {i+1}")
         
-        print(f"\n🎉 Generated {len(itineraries)} custom itineraries")
         return itineraries
+    
+    def generate_simple_mixed_custom_itineraries(self, all_places: List[Dict], location: str, 
+                                                user_categories: List[str], max_distance_miles: float) -> List[Dict]:
+        """Generate simple mixed itineraries when hotspot clustering fails"""
+        print(f"🔄 Generating simple mixed custom itineraries")
+        
+        if len(all_places) < 3:
+            return []
+        
+        # Group places by broad type for mixing
+        places_by_type = {}
+        for place in all_places:
+            broad_type = self.get_broad_type(place)
+            if broad_type not in places_by_type:
+                places_by_type[broad_type] = []
+            places_by_type[broad_type].append(place)
+        
+        # Sort places within each type by user preference and rating
+        for broad_type in places_by_type:
+            places_by_type[broad_type].sort(key=lambda x: (
+                -1 if x.get('user_preference', False) else 0,
+                -(x.get('rating', 0))
+            ))
+        
+        itineraries = []
+        
+        # Create 2 different mixed itineraries
+        for i in range(2):
+            selected_places = []
+            type_counts = {t: 0 for t in places_by_type.keys()}
+            max_per_type = 2
+            
+            # First pass: one from each type
+            for broad_type, places in places_by_type.items():
+                if places and type_counts[broad_type] < max_per_type:
+                    # Add some randomness for variety between itineraries
+                    place_idx = min(i, len(places) - 1)
+                    selected_places.append(places[place_idx])
+                    type_counts[broad_type] += 1
+            
+            # Second pass: fill to 4-5 places
+            target_size = 4 + (i % 2)  # Alternate between 4 and 5 places
+            for broad_type, places in places_by_type.items():
+                for place in places:
+                    if len(selected_places) >= target_size:
+                        break
+                    if place not in selected_places and type_counts[broad_type] < max_per_type:
+                        selected_places.append(place)
+                        type_counts[broad_type] += 1
+            
+            if len(selected_places) >= 3:
+                # Sort by distance for logical walking order
+                selected_places.sort(key=lambda x: x.get('distance_meters', 0))
+                
+                itinerary = self.create_simple_mixed_itinerary(selected_places, location, i)
+                if itinerary:
+                    itineraries.append(itinerary)
+                    print(f"✅ Generated simple mixed itinerary {i+1} with {len(selected_places)} places")
+        
+        return itineraries
+    
+    def create_simple_mixed_itinerary(self, selected_places: List[Dict], location: str, itinerary_index: int) -> Dict:
+        """Create a simple mixed itinerary from selected places"""
+        if not selected_places:
+            return None
+        
+        # Create stops with walking times
+        stops = []
+        total_duration = 0
+        
+        for i, place in enumerate(selected_places):
+            # Calculate walking time to this stop
+            if i == 0:
+                walking_time = 0
+            else:
+                prev_place = selected_places[i-1]
+                distance_meters = self.calculate_distance_between_places(prev_place, place)
+                walking_time = self.calculate_walking_time(distance_meters)
+            
+            stop = self.create_stop_from_place(place, walking_time)
+            stops.append(stop)
+            
+            # Add walking time + visit time
+            visit_time = random.randint(25, 40)
+            total_duration += walking_time + visit_time
+        
+        # Count user preferences
+        user_preference_count = sum(1 for p in selected_places if p.get('user_preference', False))
+        categories_covered = set(self.get_broad_type(p) for p in selected_places)
+        
+        titles = [
+            f"Mixed {location} Experience",
+            f"Diverse {location} Tour", 
+            f"Custom {location} Journey"
+        ]
+        
+        title = titles[itinerary_index % len(titles)]
+        description = f"A diverse exploration of {location} with {len(categories_covered)} different types of places. {user_preference_count}/{len(selected_places)} stops match your preferences."
+        
+        return {
+            'id': f"simple-mixed-{uuid.uuid4()}",
+            'title': title,
+            'description': description,
+            'duration_minutes': total_duration,
+            'stops': stops
+        }
     
     def create_bulletproof_custom_itinerary(self, all_places: List[Dict], location: str, itinerary_index: int) -> Dict:
         """Create custom itinerary with ZERO validation - guaranteed to work"""

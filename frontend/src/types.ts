@@ -51,3 +51,39 @@ export interface GetAvailableSpotsRequest {
 export interface AvailableSpotsResponse {
   spots: Stop[];
 }
+
+// Agent-specific types
+export interface AgentRequest {
+  user_request: string;
+  location: string;
+  distance_miles: number;
+}
+
+export interface AgentStop {
+  place_name: string;
+  category: string;
+  why_recommended: string;
+  walking_time_to_next: number;
+}
+
+export interface AgentRoute {
+  name: string;
+  description: string;
+  stops: AgentStop[];
+  total_duration_minutes: number;
+  local_tip: string;
+}
+
+export interface AgentUserIntent {
+  search_queries: string[];
+  mood_context: string;
+  experience_type: string;
+}
+
+export interface AgentResponse {
+  user_intent: AgentUserIntent;
+  recommendations: {
+    routes: AgentRoute[];
+  };
+  search_context: any;
+}

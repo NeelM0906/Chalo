@@ -8,12 +8,13 @@ import WanderingEyesAnimation from './components/WanderingEyesAnimation';
 
 import PresetButtons from './components/PresetButtons';
 import FilterDropdowns from './components/FilterDropdowns';
-import { LogoIcon, HeartIcon, XIcon, MapPinIcon, UsersIcon, RouteIcon } from './components/icons';
+import { LogoIcon, HeartIcon, XIcon, MapPinIcon, UsersIcon, RouteIcon, BrainIcon } from './components/icons';
 import { FavoritesProvider, useFavorites } from './context/FavoritesContext';
 import { TripProvider } from './context/TripContext';
 import WanderBuddiesPage from './components/WanderBuddiesPage';
 import TripPage from './components/TripPage';
 import CustomTripPage from './components/CustomTripPage';
+import AgentChatPage from './components/AgentChatPage';
 
 // --- Home Page Component ---
 const HomePage: React.FC = () => {
@@ -241,6 +242,9 @@ const AppContent: React.FC = () => {
 
   let page;
   switch (route) {
+    case '#/agent':
+      page = <AgentChatPage />;
+      break;
     case '#/favorites':
       page = <FavoritesPage />;
       break;
@@ -265,6 +269,9 @@ const AppContent: React.FC = () => {
           <span className="text-xl sm:text-2xl font-black tracking-tighter">Chalo</span>
         </a>
         <div className="flex items-center gap-2">
+          <a href="#/agent" onClick={(e) => handleNavClick(e, '#/agent')} className="relative p-2 rounded-full hover:bg-card transition-colors" aria-label="AI Adventure Guide">
+            <BrainIcon className="w-7 h-7 text-accent" />
+          </a>
           <a href="#/custom-trip" onClick={(e) => handleNavClick(e, '#/custom-trip')} className="relative p-2 rounded-full hover:bg-card transition-colors" aria-label="Create Custom Trip">
             <RouteIcon className="w-7 h-7 text-accent" />
           </a>

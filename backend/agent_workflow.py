@@ -2,38 +2,58 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from google_adk.agents import SequentialAgent, ToolAgent
-from google_adk.tools import FunctionTool
-from backend.agent_tools import understand_user_request, find_places, generate_itinerary
+from backend.agent_tools import run_agent_recommendations
 
-def run_agent(user_request: str):
+def run_agent(user_request: str, location: str = "San Francisco", distance_miles: float = 1.5):
     """
-    Runs the itinerary generation agent.
+    Runs the conversational travel agent for personalized recommendations.
+    
+    Args:
+        user_request: Natural language request like "thai food and something sweet"
+        location: Location to search in
+        distance_miles: Search radius in miles
+    
+    Returns:
+        Dict with user_intent, recommendations, and search_context
     """
-    # Create tools
-    understand_user_request_tool = FunctionTool(fn=understand_user_request, name="understand_user_request")
-    find_places_tool = FunctionTool(fn=find_places, name="find_places")
-    generate_itinerary_tool = FunctionTool(fn=generate_itinerary, name="generate_itinerary")
-
-    # Create agents
-    nlu_agent = ToolAgent(tools=[understand_user_request_tool])
-    places_agent = ToolAgent(tools=[find_places_tool])
-    itinerary_agent = ToolAgent(tools=[generate_itinerary_tool])
-
-    # Define the workflow
-    workflow = SequentialAgent(
-        agents=[
-            nlu_agent,
-            places_agent,
-            itinerary_agent
-        ]
-    )
-
-    # Run the agent
-    result = workflow.run(user_input=user_request)
-    return result
+    return run_agent_recommendations(user_request, location, distance_miles)
 
 if __name__ == "__main__":
-    user_request = "I'm in the mood for thai food, something sweet and then a lil walk in San Francisco"
-    itinerary = run_agent(user_request)
-    print(itinerary)
+    # Test the new agent
+    test_cases = [
+        {
+            "request": "I'm in the mood for thai food, something sweet and then a lil walk",
+            "location": "San Francisco",
+            "distance": 1.5
+        },
+        {
+            "request": "chinese food and activities", 
+            "location": "New York",
+            "distance": 2.0
+        },
+        {
+            "request": "coffee and desserts",
+            "location": "Los Angeles", 
+            "distance": 1.0
+        }
+    ]
+    
+    for i, test in enumerate(test_cases, 1):
+        print(f"\n{'='*60}")
+        print(f"TEST {i}: {test['request']} in {test['location']}")
+        print(f"{'='*60}")
+        
+        result = run_agent(test['request'], test['location'], test['distance'])
+        
+        print(f"User Intent: {result['user_intent']}")
+        print(f"Routes Found: {len(result['recommendations'].get('routes', []))}")
+        
+        for route in result['recommendations'].get('routes', []):
+            print(f"\nRoute: {route['name']}")
+            print(f"Description: {route['description']}")
+            print(f"Stops: {len(route.get('stops', []))}")
+            print(f"Duration: {route.get('total_duration_minutes', 0)} minutes")
+            if route.get('local_tip'):
+                print(f"Tip: {route['local_tip']}")
+        
+        print(f"\nSearch Context: {len(result['search_context'].get('results_by_category', {}))} categories searched")

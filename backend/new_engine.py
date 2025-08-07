@@ -628,10 +628,7 @@ class ChaloSearchEngine:
 
 def main():
     """CLI interface for standalone usage"""
-    api_key = os.getenv('GOOGLE_MAPS_API_KEY')
-    if not api_key:
-        print("Error: GOOGLE_MAPS_API_KEY environment variable not found")
-        return
+    api_key = "AIzaSyBqEMWlxcFmX94S3rhN7tiddnUm4AmPIF8"
     
     # Initialize search engine
     search_engine = ChaloSearchEngine(api_key)

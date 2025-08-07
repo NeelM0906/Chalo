@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from new_engine import ChaloSearchEngine
 from itinerary_generator import ItineraryGenerator
 from category_exclusion_manager import CategoryExclusionManager
+from agent_tools import run_agent_recommendations
 
 # Load environment variables
 load_dotenv()
@@ -29,9 +30,7 @@ app.add_middleware(
 )
 
 # Initialize search engine and itinerary generator
-API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
-if not API_KEY:
-    raise ValueError("GOOGLE_MAPS_API_KEY environment variable is required")
+API_KEY = "AIzaSyBqEMWlxcFmX94S3rhN7tiddnUm4AmPIF8"
 
 search_engine = ChaloSearchEngine(API_KEY)
 itinerary_generator = ItineraryGenerator()
@@ -98,6 +97,23 @@ class GetAvailableSpotsRequest(BaseModel):
     category: Optional[str] = None
     excluded_ids: List[str] = []
     max_distance_miles: float = 1.5
+
+class AgentRequest(BaseModel):
+    user_request: str
+    location: str
+    distance_miles: Optional[float] = 1.5
+
+class AgentRoute(BaseModel):
+    name: str
+    description: str
+    stops: List[dict]
+    total_duration_minutes: int
+    local_tip: Optional[str] = None
+
+class AgentRecommendationResponse(BaseModel):
+    user_intent: dict
+    recommendations: dict
+    search_context: dict
 
 @app.get("/")
 async def root():
@@ -342,6 +358,72 @@ async def refresh_category(request: RefreshCategoryRequest):
             detail="An error occurred while refreshing the category."
         )
 
+@app.post("/api/agent-recommendations", response_model=AgentRecommendationResponse)
+async def get_agent_recommendations(request: AgentRequest):
+    """
+    Get conversational travel recommendations based on natural language input.
+    
+    This endpoint processes natural language requests like:
+    - "thai food and something sweet"
+    - "chinese food and activities" 
+    - "coffee and a walk in the park"
+    
+    Returns personalized route recommendations with local insights.
+    """
+    try:
+        # Validate input
+        if not request.user_request or len(request.user_request.strip()) < 3:
+            raise HTTPException(
+                status_code=400, 
+                detail="User request must be at least 3 characters long"
+            )
+        
+        if not request.location or len(request.location.strip()) < 2:
+            raise HTTPException(
+                status_code=400, 
+                detail="Location must be at least 2 characters long"
+            )
+        
+        user_request = request.user_request.strip()
+        location = request.location.strip()
+        distance_miles = request.distance_miles or 1.5
+        
+        print(f"Agent API Request: '{user_request}' in {location} within {distance_miles} miles")
+        
+        # Run the agent workflow
+        result = run_agent_recommendations(user_request, location, distance_miles)
+        
+        # Check if we got valid recommendations
+        routes = result.get("recommendations", {}).get("routes", [])
+        if not routes or all(len(route.get("stops", [])) == 0 for route in routes):
+            # No valid routes found
+            total_places = sum(
+                len(places) for places in result.get("search_context", {}).get("results_by_category", {}).values()
+            )
+            
+            if total_places == 0:
+                error_msg = f"No places found matching '{user_request}' in {location} within {distance_miles} miles. Try different keywords or expand your search area."
+            else:
+                error_msg = f"Found {total_places} places but couldn't create suitable routes. Try different preferences or expand your search area."
+            
+            raise HTTPException(status_code=404, detail=error_msg)
+        
+        print(f"Agent API Success: Generated {len(routes)} routes")
+        return AgentRecommendationResponse(
+            user_intent=result["user_intent"],
+            recommendations=result["recommendations"], 
+            search_context=result["search_context"]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Agent API Error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while processing your request. Please try again with different keywords."
+        )
+
 @app.get("/api/maps-config")
 async def get_maps_config():
     """Get Google Maps API configuration for frontend"""
@@ -439,9 +521,9 @@ async def get_custom_trips(request: CustomTripRequest):
         # Also cache with location key for refresh endpoints
         search_results_cache[location] = search_results
         
-        # Generate custom itineraries with no distance constraints
+        # Generate custom itineraries with user category preferences
         itineraries = itinerary_generator.generate_custom_itineraries(
-            search_results, location, max_distance_miles
+            search_results, location, max_distance_miles, request.categories
         )
         
         if not itineraries:

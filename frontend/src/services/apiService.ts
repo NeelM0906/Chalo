@@ -277,3 +277,70 @@ export const healthCheck = async (): Promise<boolean> => {
     }
 };
 
+export const getAgentRecommendations = async (
+    userRequest: string,
+    location: string,
+    distanceMiles: number = 1.5
+): Promise<import('../types').AgentResponse> => {
+    try {
+        const requestBody = {
+            user_request: userRequest,
+            location,
+            distance_miles: distanceMiles
+        };
+
+        const response = await fetch(`${API_BASE_URL}/api/agent-recommendations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+            let errorMessage = `HTTP error! status: ${response.status}`;
+
+            try {
+                const errorData: ErrorResponse = await response.json();
+                errorMessage = errorData.detail || errorMessage;
+            } catch {
+                // If we can't parse error response, use default message
+            }
+
+            if (response.status === 400) {
+                throw new Error(errorMessage);
+            }
+            if (response.status === 404) {
+                throw new Error(errorMessage);
+            }
+            if (response.status === 429) {
+                throw new Error('Too many requests. Please try again later.');
+            }
+            if (response.status === 500) {
+                throw new Error('Server error occurred. Please try again.');
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+
+        if (!data.recommendations || !data.recommendations.routes) {
+            throw new Error('Invalid data format received from agent API.');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error getting agent recommendations:', error);
+
+        if (error instanceof Error) {
+            if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                throw new Error('Unable to connect to the server. Please ensure the backend is running on port 8000.');
+            }
+            throw error;
+        }
+
+        throw new Error('Failed to get recommendations from the AI agent.');
+    }
+};
+
