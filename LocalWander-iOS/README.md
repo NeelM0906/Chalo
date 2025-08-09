@@ -1,6 +1,6 @@
-# Local Wander - iOS Migration
+# Chalo - iOS Migration
 
-This is the complete Swift/Xcode migration of the Local Wander travel recommendation app. The original React/TypeScript frontend and Python/FastAPI backend have been converted to a native iOS app with SwiftUI and a Swift backend using Vapor.
+This is the complete Swift/Xcode migration of the Chalo travel recommendation app. The original React/TypeScript frontend and Python/FastAPI backend have been converted to a native iOS app with SwiftUI and a Swift backend using Vapor.
 
 
 Theres a billion issues here but hey its a start.

@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Itinerary } from '../types';
 import { getCustomTrips } from '../services/apiService';
-import WanderingEyesAnimation from './WanderingEyesAnimation';
+import ChaloEyesAnimation from './ChaloEyesAnimation';
 import ItineraryCard from './ItineraryCard';
 import EditableItineraryModal from './EditableItineraryModal';
 import {
@@ -219,7 +219,7 @@ const CustomTripPage: React.FC = () => {
       {isLoading && (
         <div className="flex justify-center items-center py-16">
           <div className="text-center">
-            <WanderingEyesAnimation size={64} />
+            <ChaloEyesAnimation size={64} />
             <p className="text-gray-400 mt-4 text-lg">Creating your custom adventures...</p>
           </div>
         </div>

@@ -94,14 +94,18 @@ class ChaloSearchEngine:
             print(f"Distance calculation failed: {e}")
             return None
 
-    def search_category(self, lat: float, lng: float, category: str, min_rating: float = 4.4) -> List[Dict]:
-        """Search for places in a specific category and filter by rating"""
+    def search_category(self, lat: float, lng: float, category: str, min_rating: float = 4.4, keyword: Optional[str] = None) -> List[Dict]:
+        """Search for places in a specific category and filter by rating.
+        Supports optional keyword (e.g., cuisine: 'thai').
+        """
         params = {
             'location': f'{lat},{lng}',
             'type': category,
             'rankby': 'distance',
             'key': self.api_key
         }
+        if keyword:
+            params['keyword'] = keyword
         
         response = requests.get(NEARBY_SEARCH_BASE_URL, params=params)
         data = response.json()

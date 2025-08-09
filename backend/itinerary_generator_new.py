@@ -5,7 +5,7 @@ from datetime import datetime
 import math
 
 class ItineraryGenerator:
-    """Generates itineraries from LocalWander search results"""
+    """Generates itineraries from Chalo search results"""
     
     # Stock images for places without photos
     STOCK_IMAGES = [

@@ -1,6 +1,6 @@
-# Local Wander Frontend
+# Chalo Frontend
 
-React TypeScript frontend for the Local Wander application.
+React TypeScript frontend for the Chalo application.
 
 ## Structure
 

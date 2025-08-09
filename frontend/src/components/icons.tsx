@@ -149,7 +149,7 @@ export const TrashIcon: React.FC<IconProps> = (props) => (
   </svg>
 );
 
-export const WanderingEyesIcon: React.FC<IconProps> = (props) => (
+export const ChaloEyesIcon: React.FC<IconProps> = (props) => (
   <svg {...props} viewBox="0 0 80 40" xmlns="http://www.w3.org/2000/svg">
     <g className="eye-group">
       {/* Left Eye */}

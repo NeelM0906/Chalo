@@ -1,57 +1,46 @@
-# Local Wander Backend
+# Chalo Backend
 
-FastAPI backend for the Local Wander recommendation engine.
+FastAPI backend for the Chalo recommendation engine with live Google Maps integration and an AI agent endpoint.
 
 ## Structure
 
-- `main.py` - Main FastAPI application with API endpoints
-- `requirements.txt` - Python dependencies
+- `main.py` — FastAPI application and API endpoints
+- `new_engine.py` — Chalo search engine (Google Geocoding, Places, Distance Matrix)
+- `itinerary_generator.py` — Itinerary generation logic
+- `agent_tools.py` — Conversational agent (intent parsing + dynamic search)
+- `requirements.txt` — Python dependencies
 
 ## API Endpoints
 
-### POST /api/itineraries
+- POST `/api/itineraries` — Generate itineraries for a location (supports `preset`, `max_price_level`, `max_distance_miles`)
+- POST `/api/custom-trips` — Generate itineraries for selected categories and distance
+- POST `/api/refresh-spot` — Replace a spot using cached results
+- POST `/api/refresh-category` — Replace a spot from a different category with exclusion logic
+- POST `/api/get-available-spots` — List candidate spots to add
+- POST `/api/agent-recommendations` — AI conversational route suggestions
+- GET `/api/maps-config` — Returns browser-safe Maps Embed key for client map embeds
+- GET `/api/health` — Health check
 
-Generate itineraries for a given location.
+### Testing mode (uses saved data instead of live API)
+- POST `/api/testing/enable`
+- POST `/api/testing/disable`
+- GET `/api/testing/status`
 
-**Request:**
-```json
-{
-  "location": "San Francisco, CA"
-}
+## Environment
+
+Create `backend/.env` with keys (names shown for clarity):
 ```
-
-**Response:**
-```json
-{
-  "itineraries": [
-    {
-      "id": "itinerary-uuid",
-      "title": "Hidden Gems of San Francisco",
-      "description": "Discover the secret spots locals love in your neighborhood.",
-      "duration_minutes": 180,
-      "stops": [
-        {
-          "id": "stop-uuid",
-          "name": "Local Coffee Roastery",
-          "category": "Cafe",
-          "walking_time_minutes": 0,
-          "description": "Start your adventure with artisanal coffee from local beans.",
-          "image_url": "https://images.unsplash.com/..."
-        }
-      ]
-    }
-  ],
-  "sources": []
-}
+GOOGLE_PLACES_API_KEY=...
+MAPS_EMBED_API_KEY=...
+GEMINI_API_KEY=...
 ```
 
 ## Development
 
-The current implementation includes placeholder data. Replace the logic in the `/api/itineraries` endpoint with your custom recommendation engine.
+Install and run:
+```bash
+pip install -r requirements.txt
+python main.py
+```
 
-Key areas to implement:
-1. Location parsing and validation
-2. Data source integration (maps, reviews, local business data)
-3. Recommendation algorithm
-4. Image URL generation or integration with image services
-5. Source tracking for transparency
+The API will be available at `http://localhost:8000`.

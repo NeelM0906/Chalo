@@ -13,7 +13,7 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(undefin
 export const FavoritesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [favorites, setFavorites] = useState<Stop[]>(() => {
     try {
-      const item = window.localStorage.getItem('localWanderFavorites');
+      const item = window.localStorage.getItem('chaloFavorites');
       return item ? JSON.parse(item) : [];
     } catch (error) {
       console.error('Error reading favorites from localStorage', error);
@@ -23,7 +23,7 @@ export const FavoritesProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   useEffect(() => {
     try {
-      window.localStorage.setItem('localWanderFavorites', JSON.stringify(favorites));
+      window.localStorage.setItem('chaloFavorites', JSON.stringify(favorites));
     } catch (error) {
       console.error('Error writing favorites to localStorage', error);
     }

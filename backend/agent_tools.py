@@ -2,7 +2,6 @@ import os
 import json
 import requests
 from new_engine import ChaloSearchEngine
-from itinerary_generator import ItineraryGenerator
 
 class GeminiClient:
     """Simple Gemini API client for agent functionality"""
@@ -63,120 +62,127 @@ class AgentSearchEngine(ChaloSearchEngine):
     
     def __init__(self, api_key: str):
         super().__init__(api_key)
-        self.intent_to_query_mapping = {
-            # Food categories - all cuisines map to food searches
-            "food": "restaurants",
-            "chinese food": "chinese restaurants",
-            "thai food": "thai restaurants", 
-            "mexican food": "mexican restaurants",
-            "indian food": "indian restaurants",
-            "japanese food": "japanese restaurants",
-            "korean food": "korean restaurants",
-            "vietnamese food": "vietnamese restaurants",
-            "lebanese food": "lebanese restaurants",
-            "mediterranean food": "mediterranean restaurants",
-            "turkish food": "turkish restaurants",
-            "greek food": "greek restaurants",
-            "halal food": "halal restaurants",
-            "italian food": "italian restaurants",
-            "american food": "american restaurants",
-            "pizza": "pizza restaurants",
-            "burgers": "burger restaurants",
-            "sushi": "sushi restaurants",
-            "bbq": "bbq restaurants",
-            "seafood": "seafood restaurants",
-            
-            # Sweet/dessert categories
-            "desserts": "desserts",
-            "sweets": "bakeries",
-            "ice cream": "ice cream shops",
-            "bakery": "bakeries",
-            "pastries": "bakeries",
-            "sweet bite": "desserts",
-            "something sweet": "desserts",
-            
+        # Valid Places 'type' plus optional 'keyword' for specificity (e.g., cuisine)
+        self.intent_map = {
+            # Food / cuisines
+            "food":            {"type": "restaurant"},
+            "chinese food":    {"type": "restaurant", "keyword": "chinese"},
+            "thai food":       {"type": "restaurant", "keyword": "thai"},
+            "mexican food":    {"type": "restaurant", "keyword": "mexican"},
+            "indian food":     {"type": "restaurant", "keyword": "indian"},
+            "japanese food":   {"type": "restaurant", "keyword": "japanese"},
+            "korean food":     {"type": "restaurant", "keyword": "korean"},
+            "vietnamese food": {"type": "restaurant", "keyword": "vietnamese"},
+            "mediterranean":   {"type": "restaurant", "keyword": "mediterranean"},
+            "greek":           {"type": "restaurant", "keyword": "greek"},
+            "italian":         {"type": "restaurant", "keyword": "italian"},
+            "pizza":           {"type": "restaurant", "keyword": "pizza"},
+            "burgers":         {"type": "restaurant", "keyword": "burger"},
+            "sushi":           {"type": "restaurant", "keyword": "sushi"},
+            "bbq":             {"type": "restaurant", "keyword": "bbq"},
+            "seafood":         {"type": "restaurant", "keyword": "seafood"},
+
+            # Desserts / sweets
+            "desserts":        {"type": "bakery", "keyword": "dessert"},
+            "ice cream":       {"type": "ice_cream"},
+            "bakery":          {"type": "bakery"},
+
             # Drinks
-            "coffee": "cafes",
-            "drinks": "bars",
-            "cocktails": "bars",
-            "beer": "bars",
-            "wine": "wine bars",
-            
-            # Activities
-            "activities": "tourist_attraction",
-            "things to do": "tourist_attraction", 
-            "attractions": "tourist_attraction",
-            "sightseeing": "tourist_attraction",
-            "museums": "museum",
-            "art": "art_gallery",
-            "galleries": "art_gallery",
-            "parks": "park",
-            "nature": "park",
-            "outdoors": "park",
-            "walking": "park",
-            "shopping": "shopping_mall",
-            "shops": "store",
-            "markets": "store",
-            
-            # Entertainment
-            "entertainment": "amusement_park",
-            "fun": "amusement_park",
-            "nightlife": "night_club",
-            "music": "night_club",
-            "dancing": "night_club"
+            "coffee":          {"type": "cafe"},
+            "drinks":          {"type": "bar"},
+            "cocktails":       {"type": "bar", "keyword": "cocktail"},
+            "wine":            {"type": "bar", "keyword": "wine"},
+
+            # Activities / attractions
+            "activities":      {"type": "tourist_attraction"},
+            "things to do":    {"type": "tourist_attraction"},
+            "attractions":     {"type": "tourist_attraction"},
+            "sightseeing":     {"type": "tourist_attraction"},
+            "museums":         {"type": "museum"},
+            "art":             {"type": "art_gallery"},
+            "galleries":       {"type": "art_gallery"},
+            "parks":           {"type": "park"},
+            "nature":          {"type": "park"},
+            "outdoors":        {"type": "park"},
+            "walking":         {"type": "park"},
+            "shopping":        {"type": "shopping_mall"}
         }
-    
-    def search_agent_queries(self, location: str, extracted_queries: list, distance_miles: float = 1.5) -> dict:
-        """Search based on agent-extracted queries instead of fixed categories"""
-        print(f"Agent Search: {extracted_queries} near {location} within {distance_miles} miles")
-        
-        # Convert extracted queries to Google Places API types
-        search_categories = []
-        for query in extracted_queries:
-            # Normalize query to lowercase
-            normalized_query = query.lower().strip()
-            
-            # Map to Google Places type
-            places_type = self.intent_to_query_mapping.get(normalized_query, "restaurant")
-            search_categories.append(places_type)
-        
-        # Remove duplicates while preserving order
-        unique_categories = []
-        for category in search_categories:
-            if category not in unique_categories:
-                unique_categories.append(category)
-        
-        print(f"Mapped to Google Places types: {unique_categories}")
-        
-        # Use existing search functionality with dynamic categories
-        results_by_category = {}
-        
-        # Geocode location first
+
+    def search_agent_queries(self, location: str, extracted_queries: list, distance_miles: float = 1.5, min_rating: float = 4.0) -> dict:
+        """Search based on agent-extracted queries using valid Places types and optional keywords.
+        Parallelized for responsiveness.
+        """
+        print(f"Agent Search: {extracted_queries} near {location} within {distance_miles} miles (min_rating={min_rating})")
+
         lat, lng = self.geocode_address(location)
         if not lat:
             print(f"Failed to geocode location: {location}")
             return {"results_by_category": {}}
-        
-        # Search each category
-        for i, category_type in enumerate(unique_categories):
-            original_query = extracted_queries[i] if i < len(extracted_queries) else category_type
-            print(f"Searching {original_query} ({category_type})...")
-            
-            # Use existing search_category method
-            places = self.search_category(lat, lng, category_type, min_rating=4.0)
-            
-            # Filter by distance
-            max_distance_meters = distance_miles * 1609.34
-            filtered_places = []
-            for place in places:
-                if place.get('distance_meters', 0) <= max_distance_meters:
-                    # Add the original query as search_category for context
-                    place['search_category'] = original_query
-                    filtered_places.append(place)
-            
-            results_by_category[original_query] = filtered_places
-            print(f"Found {len(filtered_places)} places for {original_query}")
-        
+
+        from concurrent.futures import ThreadPoolExecutor
+
+        results_by_category = {}
+        max_distance_meters = distance_miles * 1609.34
+
+        # Build tasks
+        tasks = []
+        queries = [q.strip() for q in extracted_queries]
+        with ThreadPoolExecutor(max_workers=min(8, len(queries) or 1)) as pool:
+            for q in queries:
+                norm = q.lower()
+                # Special-case: broaden "desserts" across multiple types
+                if norm == "desserts":
+                    dessert_specs = [
+                        {"type": "bakery", "keyword": "dessert"},
+                        {"type": "cafe", "keyword": "dessert"},
+                        {"type": "ice_cream", "keyword": None},
+                    ]
+                    for ds in dessert_specs:
+                        print(f"Searching {q} (type={ds['type']}, keyword={ds.get('keyword')})...")
+                        tasks.append((q, pool.submit(self.search_category, lat, lng, ds['type'], min_rating, ds.get('keyword'))))
+                else:
+                    spec = self.intent_map.get(norm, {"type": "restaurant"})
+                    category = spec["type"]
+                    keyword = spec.get("keyword")
+                    print(f"Searching {q} (type={category}, keyword={keyword})...")
+                    tasks.append((q, pool.submit(self.search_category, lat, lng, category, min_rating, keyword)))
+
+            for q, fut in tasks:
+                try:
+                    places = fut.result()
+                except Exception as e:
+                    print(f"Search failed for {q}: {e}")
+                    places = []
+
+                filtered = []
+                for p in places:
+                    if p.get('distance_meters', 0) <= max_distance_meters:
+                        p['search_category'] = q  # keep original user intent for context
+                        # ensure distance_miles present
+                        if p.get('distance_miles') is None and p.get('distance_meters') is not None:
+                            p['distance_miles'] = round(p['distance_meters'] / 1609.34, 2)
+                        filtered.append(p)
+
+                # Merge results for the same query (e.g., desserts multi-type)
+                if q not in results_by_category:
+                    results_by_category[q] = []
+                results_by_category[q].extend(filtered)
+                print(f"Found {len(filtered)} places for {q}")
+
+        # Deduplicate merged categories by place_id and sort by rating then distance
+        for q, places in list(results_by_category.items()):
+            seen = set()
+            deduped = []
+            for p in places:
+                pid = p.get('place_id')
+                if pid and pid in seen:
+                    continue
+                if pid:
+                    seen.add(pid)
+                deduped.append(p)
+            deduped.sort(key=lambda x: (-(x.get('rating') or 0), x.get('distance_meters', 0)))
+            results_by_category[q] = deduped
+
         return {"results_by_category": results_by_category}
 
 def understand_user_request(user_request: str) -> dict:
@@ -336,6 +342,11 @@ def generate_agent_recommendations(search_results: dict, user_context: dict, loc
             places_summary[category].append(place_info)
             all_places.append(place_info)
     
+    # Ensure distances in miles exist for proximity-based logic
+    for p in all_places:
+        if p.get("distance_miles") is None and p.get("distance_meters") is not None:
+            p["distance_miles"] = round(p["distance_meters"] / 1609.34, 2)
+
     # Rule-based route generation
     def create_rule_based_routes():
         if not all_places:
@@ -508,10 +519,12 @@ def run_agent_recommendations(user_request: str, location: str, distance_miles: 
         
         # Step 2: Dynamic search
         print("Step 2: Searching for places...")
-        api_key = "AIzaSyBqEMWlxcFmX94S3rhN7tiddnUm4AmPIF8"
+        api_key = os.getenv("GOOGLE_PLACES_API_KEY", "")
         agent_search_engine = AgentSearchEngine(api_key)
+        # Personalize min_rating by experience type
+        min_rating = 4.5 if intent_data.get("experience_type") == "upscale" else 4.0
         search_results = agent_search_engine.search_agent_queries(
-            location, intent_data["search_queries"], distance_miles
+            location, intent_data["search_queries"], distance_miles, min_rating=min_rating
         )
         
         # Check if we found any places

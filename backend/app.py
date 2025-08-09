@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-app = FastAPI(title="Local Wander API", version="1.0.0")
+app = FastAPI(title="Chalo API", version="1.0.0")
 
 # Enable CORS for frontend
 app.add_middleware(
@@ -37,7 +37,7 @@ class RefreshSpotRequest(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "Local Wander API - Refresh Spot Service"}
+    return {"message": "Chalo API - Refresh Spot Service"}
 
 @app.post("/api/refresh-spot")
 async def refresh_spot(request: RefreshSpotRequest):

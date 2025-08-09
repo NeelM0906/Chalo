@@ -1,4 +1,4 @@
-# Local Wander - Custom Recommendation Engine
+# Chalo - Custom Recommendation Engine
 
 A modular travel discovery application with a React frontend and Python FastAPI backend. Users can discover hyper-local adventures and itineraries powered by a custom recommendation engine.
 
@@ -98,19 +98,22 @@ A modular travel discovery application with a React frontend and Python FastAPI 
 - The frontend uses Vite with React 19 and TypeScript
 - The backend uses FastAPI with Pydantic for data validation
 - CORS is configured to allow requests from the frontend development server
-- The current backend includes placeholder data - replace with your custom recommendation engine
+- Backend is fully integrated with Google Maps (Geocoding, Places, Distance Matrix) and includes an AI agent endpoint
 
-## Google Maps API Setup
+## Google Maps and AI Setup
 
-The backend uses Google Maps APIs for location data. You'll need:
+The backend uses Google Maps APIs for location data and optionally Gemini for conversational generation. You'll need:
 
 1. **Google Cloud Project** with billing enabled
 2. **Enable these APIs:**
    - Geocoding API
    - Places API (New)
    - Distance Matrix API
-3. **Create an API key** with appropriate restrictions
-4. **Add the API key** to `backend/.env`
+3. **Create API keys** with appropriate restrictions
+   - Server key for Places/Geocoding/Distance Matrix: `GOOGLE_PLACES_API_KEY`
+   - Browser key for Maps Embed: `MAPS_EMBED_API_KEY`
+   - Optional Gemini key: `GEMINI_API_KEY`
+4. **Add keys** to `backend/.env`
 
 ### API Usage
 - **Geocoding**: Convert addresses to coordinates
@@ -120,20 +123,22 @@ The backend uses Google Maps APIs for location data. You'll need:
 
 ## Current Implementation
 
-✅ **Fully Integrated LocalWander Search Engine**
-- Real-time Google Maps API integration
+✅ **Fully Integrated Chalo Search Engine**
+- Real-time Google Maps API integration (server-side)
 - 9 category search (restaurants, cafes, parks, museums, etc.)
 - 1.5-mile radius local discovery
-- Concurrent processing for performance
-- Rate limiting for API compliance
+- Concurrent processing and rate limiting
 
 ✅ **Intelligent Itinerary Generation**
-- **Mixed itineraries** with natural variety (default)
-- **Preset category filters** (Nature, Food, Culture, Shopping, History)
-- Food stops naturally positioned in middle of journeys
-- Real walking time calculations
-- Logical stop ordering by distance
-- Rich place descriptions with ratings and reviews
+- Mixed itineraries with natural variety (default)
+- Preset and custom category filters
+- Real walking time calculations and logical ordering
+- Rich descriptions with ratings and reviews
+
+✅ **Conversational Agent**
+- Endpoint: POST `/api/agent-recommendations`
+- Rule-based intent parsing with Gemini fallback
+- Dynamic category search mapped from user requests
 
 ✅ **Production-Ready Features**
 - Error handling and validation

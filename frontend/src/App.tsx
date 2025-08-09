@@ -4,14 +4,14 @@ import { getItineraries } from './services/apiService';
 import LocationInput from './components/LocationInput';
 import ItineraryCard from './components/ItineraryCard';
 import EditableItineraryModal from './components/EditableItineraryModal';
-import WanderingEyesAnimation from './components/WanderingEyesAnimation';
+import ChaloEyesAnimation from './components/ChaloEyesAnimation';
 
 import PresetButtons from './components/PresetButtons';
 import FilterDropdowns from './components/FilterDropdowns';
 import { LogoIcon, HeartIcon, XIcon, MapPinIcon, UsersIcon, RouteIcon, BrainIcon } from './components/icons';
 import { FavoritesProvider, useFavorites } from './context/FavoritesContext';
 import { TripProvider } from './context/TripContext';
-import WanderBuddiesPage from './components/WanderBuddiesPage';
+import ChaloBuddiesPage from './components/ChaloBuddiesPage';
 import TripPage from './components/TripPage';
 import CustomTripPage from './components/CustomTripPage';
 import AgentChatPage from './components/AgentChatPage';
@@ -122,7 +122,7 @@ const HomePage: React.FC = () => {
       {isLoading && (
         <div className="flex justify-center items-center py-16">
           <div className="text-center">
-            <WanderingEyesAnimation size={64} />
+            <ChaloEyesAnimation size={64} />
             <p className="text-gray-400 mt-4 text-lg">Discovering your next adventure...</p>
           </div>
         </div>
@@ -249,7 +249,7 @@ const AppContent: React.FC = () => {
       page = <FavoritesPage />;
       break;
     case '#/buddies':
-      page = <WanderBuddiesPage />;
+      page = <ChaloBuddiesPage />;
       break;
     case '#/trip':
       page = <TripPage />;
@@ -275,7 +275,7 @@ const AppContent: React.FC = () => {
           <a href="#/custom-trip" onClick={(e) => handleNavClick(e, '#/custom-trip')} className="relative p-2 rounded-full hover:bg-card transition-colors" aria-label="Create Custom Trip">
             <RouteIcon className="w-7 h-7 text-accent" />
           </a>
-          <a href="#/buddies" onClick={(e) => handleNavClick(e, '#/buddies')} className="relative p-2 rounded-full hover:bg-card transition-colors" aria-label="View Wander Buddies">
+          <a href="#/buddies" onClick={(e) => handleNavClick(e, '#/buddies')} className="relative p-2 rounded-full hover:bg-card transition-colors" aria-label="View Chalo Buddies">
             <UsersIcon className="w-7 h-7 text-accent" />
           </a>
           <a href="#/favorites" onClick={(e) => handleNavClick(e, '#/favorites')} className="relative p-2 rounded-full hover:bg-card transition-colors" aria-label={`View ${favorites.length} favorites`}>

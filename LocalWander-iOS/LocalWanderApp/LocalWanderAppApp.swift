@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct LocalWanderAppApp: App {
+struct ChaloAppApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

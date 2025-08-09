@@ -113,7 +113,7 @@ struct HomeView: View {
                     }
                 }
             }
-            .navigationTitle("Local Wander")
+            .navigationTitle("Chalo")
             .navigationBarTitleDisplayMode(.large)
         }
         .sheet(item: $selectedItinerary) { itinerary in

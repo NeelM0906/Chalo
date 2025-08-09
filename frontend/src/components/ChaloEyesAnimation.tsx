@@ -1,11 +1,11 @@
 import React from 'react';
 
-interface WanderingEyesAnimationProps {
+interface ChaloEyesAnimationProps {
   size?: number;
   className?: string;
 }
 
-const WanderingEyesAnimation: React.FC<WanderingEyesAnimationProps> = ({ 
+const ChaloEyesAnimation: React.FC<ChaloEyesAnimationProps> = ({ 
   size = 48, 
   className = "" 
 }) => {
@@ -28,7 +28,7 @@ const WanderingEyesAnimation: React.FC<WanderingEyesAnimationProps> = ({
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              animation: 'wander-left 3s ease-in-out infinite'
+              animation: 'chalo-left 3s ease-in-out infinite'
             }}
           >
             <div 
@@ -57,7 +57,7 @@ const WanderingEyesAnimation: React.FC<WanderingEyesAnimationProps> = ({
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              animation: 'wander-right 3s ease-in-out infinite'
+              animation: 'chalo-right 3s ease-in-out infinite'
             }}
           >
             <div 
@@ -75,7 +75,7 @@ const WanderingEyesAnimation: React.FC<WanderingEyesAnimationProps> = ({
       </div>
       
       <style jsx>{`
-        @keyframes wander-left {
+        @keyframes chalo-left {
           0% { transform: translate(-50%, -50%); }
           20% { transform: translate(-30%, -50%); }
           40% { transform: translate(-70%, -50%); }
@@ -84,7 +84,7 @@ const WanderingEyesAnimation: React.FC<WanderingEyesAnimationProps> = ({
           100% { transform: translate(-50%, -50%); }
         }
         
-        @keyframes wander-right {
+        @keyframes chalo-right {
           0% { transform: translate(-50%, -50%); }
           25% { transform: translate(-70%, -50%); }
           50% { transform: translate(-30%, -50%); }
@@ -96,4 +96,4 @@ const WanderingEyesAnimation: React.FC<WanderingEyesAnimationProps> = ({
   );
 };
 
-export default WanderingEyesAnimation;
+export default ChaloEyesAnimation;

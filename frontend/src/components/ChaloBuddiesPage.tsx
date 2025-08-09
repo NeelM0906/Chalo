@@ -147,13 +147,13 @@ const FriendPathCard: React.FC<{ path: CuratedPath }> = ({ path }) => {
 };
 
 
-// --- Main Wander Buddies Page Component ---
-const WanderBuddiesPage: React.FC = () => {
+// --- Main Chalo Buddies Page Component ---
+const ChaloBuddiesPage: React.FC = () => {
     return (
         <div>
             <div className="mb-12 text-center">
                 <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white">
-                    Wander Buddies
+                    Chalo Buddies
                 </h1>
                 <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mt-4">
                     Explore hand-picked adventures curated by your friends.
@@ -169,4 +169,4 @@ const WanderBuddiesPage: React.FC = () => {
     );
 };
 
-export default WanderBuddiesPage;
+export default ChaloBuddiesPage;

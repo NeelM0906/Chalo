@@ -16,7 +16,7 @@ interface TripContextType {
 
 const TripContext = createContext<TripContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'localwander_current_trip';
+const STORAGE_KEY = 'chalo_current_trip';
 
 interface TripProviderProps {
   children: ReactNode;

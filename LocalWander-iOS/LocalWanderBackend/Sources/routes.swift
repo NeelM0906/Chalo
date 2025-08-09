@@ -4,7 +4,7 @@ import Fluent
 func routes(_ app: Application) throws {
     // Health check
     app.get { req async in
-        return ["message": "Local Wander API - Backend Service"]
+        return ["message": "Chalo API - Backend Service"]
     }
     
     // API routes

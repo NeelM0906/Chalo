@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Building and Running Local Wander iOS App..."
+echo "Building and Running Chalo iOS App..."
 echo "==========================================="
 
 # Check if Xcode is installed

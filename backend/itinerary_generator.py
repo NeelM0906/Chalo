@@ -490,9 +490,12 @@ class ItineraryGenerator:
             # Fallback: create simple high-quality itinerary if we have good places
             if len(all_places) >= 3:
                 print(f"Fallback: creating simple high-quality 3-place itinerary")
-                best_places = sorted(all_places, key=lambda x: -(x.get('rating', 3.0)))[:3]
+                best_places = sorted(
+                    all_places,
+                    key=lambda x: (-(x.get('rating') or 0), x.get('distance_meters', float('inf')))
+                )[:3]
                 # Sort by distance for logical flow
-                best_places.sort(key=lambda x: x.get('distance_meters', 0))
+                best_places.sort(key=lambda x: x.get('distance_meters', float('inf')))
                 return self.format_itinerary(best_places, location, itinerary_index, is_micro=False)
             return None
         

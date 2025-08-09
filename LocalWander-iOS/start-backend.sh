@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Starting Local Wander Backend Server..."
+echo "Starting Chalo Backend Server..."
 echo "======================================"
 
 cd LocalWanderBackend
