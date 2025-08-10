@@ -325,8 +325,7 @@ def _transform_business(b: Dict[str, Any]) -> Dict[str, Any]:
         "AboutThisBizYearEstablished": about.get("year_established") or b.get("about_this_biz_year_established") or b.get("year_established"),
     }
 
-
-<<<<<<< HEAD
+ 
 def _parse_duration_to_minutes(value: Any) -> Optional[int]:
     if value is None:
         return None
@@ -556,8 +555,7 @@ def _extract_day_plan(raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     return None
 
 
-=======
->>>>>>> origin/main
+ 
 def transform_yelp_ai_response(raw: Dict[str, Any]) -> Dict[str, Any]:
     chat_id = _extract_chat_id(raw)
     text = _extract_text(raw)
