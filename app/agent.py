@@ -19,7 +19,11 @@ class LocalGuideAgent:
                 " Please try asking in a different way."
             )
 
-        audio_path = self.speech_synthesizer.synthesize_to_wav(ai_text, output_audio_path)
+        # Prefer synthesize_to_file; fall back to synthesize_to_wav for compatibility
+        if hasattr(self.speech_synthesizer, "synthesize_to_file"):
+            audio_path = self.speech_synthesizer.synthesize_to_file(ai_text, output_audio_path)
+        else:
+            audio_path = self.speech_synthesizer.synthesize_to_wav(ai_text, output_audio_path)
         return {
             "recommendation_text": ai_text,
             "audio_path": audio_path,

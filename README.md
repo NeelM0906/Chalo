@@ -198,3 +198,19 @@ Replace `AIEngine.query` in `app/ai_engine.py` to call your service and return a
 ```
 
 The agent will speak exactly the `text` content it receives.
+
+### Online TTS (no local speech computation)
+
+This app now uses gTTS (Google Translate TTS) to synthesize speech online. Your text is sent to the service, and an MP3 is returned and saved locally. No on-device speech generation occurs.
+
+- Default output: MP3
+- Flags:
+  - `--lang`: language code (e.g., `en`, `en-GB`, `es`, `fr`)
+  - `--tld`: region TLD (e.g., `com`, `co.uk`) which can affect accent
+  - `--slow`: slower speech
+
+Example:
+
+```bash
+python main.py --query "Food near the river" --lang en --tld com --slow
+```

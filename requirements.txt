@@ -1,4 +1,1 @@
-pyttsx3==2.90
-transformers==4.41.2
-datasets==2.20.0
-scipy==1.13.1
+gTTS==2.5.1
