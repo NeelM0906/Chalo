@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { AgentResponse, AgentRoute } from '../types';
+import { AgentRoute, AgentResponse, AIEngineResponse, AIBusiness } from '../types';
 import { getAgentRecommendations } from '../services/apiService';
 import AgentInput from './AgentInput';
 import AgentRouteCard from './AgentRouteCard';
 import AgentRouteModal from './AgentRouteModal';
 import AgentLoadingState from './AgentLoadingState';
 import { BrainIcon, MapPinIcon } from './icons';
+import AIDayPlanCard from './AIDayPlanCard';
 
 const AgentChatPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [agentResponse, setAgentResponse] = useState<AgentResponse | null>(null);
+  const [agentResponse, setAgentResponse] = useState<(Partial<AgentResponse> & Partial<AIEngineResponse>) | null>(null);
   const [selectedRoute, setSelectedRoute] = useState<AgentRoute | null>(null);
   const [currentSearch, setCurrentSearch] = useState<{ userRequest: string; location: string } | null>(null);
 
@@ -21,16 +22,19 @@ const AgentChatPage: React.FC = () => {
     setCurrentSearch({ userRequest, location });
 
     try {
-      // Add minimum delay for better UX
       const minDelay = new Promise(resolve => setTimeout(resolve, 3000));
       const apiCall = getAgentRecommendations(userRequest, location, distanceMiles);
-      
       const [result] = await Promise.all([apiCall, minDelay]);
-      
-      if (result.recommendations?.routes && result.recommendations.routes.length > 0) {
+
+      const hasRoutes = !!(result?.recommendations?.routes && result.recommendations.routes.length > 0);
+      const hasPlans = Array.isArray(result?.plans) && result.plans.length > 0;
+      const hasPlan = !!result?.plan;
+      const hasBusinesses = Array.isArray(result?.businesses) && result.businesses.length > 0;
+
+      if (hasRoutes || hasPlans || hasPlan || hasBusinesses) {
         setAgentResponse(result);
       } else {
-        setError('I couldn\'t find any great routes for your request. Try different keywords or expand your search area.');
+        setError("I couldn't find any great routes or plans for your request. Try different keywords or expand your search area.");
       }
     } catch (e) {
       console.error('Agent search error:', e);
@@ -104,44 +108,102 @@ const AgentChatPage: React.FC = () => {
       {/* Results Section */}
       {!isLoading && agentResponse && (
         <div className="space-y-8">
-          {/* User Intent Summary */}
-          <div className="bg-card border border-gray-700 rounded-2xl p-6">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-10 h-10 bg-accent/20 text-accent rounded-full flex items-center justify-center">
-                <BrainIcon className="w-5 h-5" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-white font-semibold mb-2">I understand you're looking for:</h3>
-                <p className="text-gray-300 mb-3">"{agentResponse.user_intent.mood_context}"</p>
-                <div className="flex flex-wrap gap-2">
-                  {agentResponse.user_intent.search_queries.map((query, index) => (
-                    <span 
-                      key={index}
-                      className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm font-medium"
-                    >
-                      {query}
-                    </span>
-                  ))}
+          {/* Multiple plans */}
+          {Array.isArray(agentResponse.plans) && agentResponse.plans.length > 0 && (
+            <div className="space-y-6">
+              {agentResponse.plans.map((p, idx) => (
+                <AIDayPlanCard key={(p as any).id || idx} plan={p as any} />
+              ))}
+            </div>
+          )}
+
+          {/* Single plan */}
+          {!agentResponse.plans && agentResponse.plan && (
+            <AIDayPlanCard plan={agentResponse.plan as any} />
+          )}
+
+          {/* Chat text summary: hide if any plan present */}
+          {agentResponse.text && !agentResponse.plan && !agentResponse.plans && (
+            <div className="bg-card border border-gray-700 rounded-2xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-10 h-10 bg-accent/20 text-accent rounded-full flex items-center justify-center">
+                  <BrainIcon className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-white font-semibold mb-2">Suggested ideas</h3>
+                  <p className="text-gray-300 whitespace-pre-line">{agentResponse.text}</p>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Routes */}
-          <div>
-            <h2 className="text-2xl font-bold text-white mb-6 text-center">
-              Here are {agentResponse.recommendations.routes.length} perfect routes for you:
-            </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {agentResponse.recommendations.routes.map((route, index) => (
-                <AgentRouteCard
-                  key={index}
-                  route={route}
-                  onSelect={handleRouteSelect}
-                />
-              ))}
+          {/* Routes (legacy) */}
+          {agentResponse.recommendations?.routes && (
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-6 text-center">
+                Here are {agentResponse.recommendations.routes.length} perfect routes for you:
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {agentResponse.recommendations.routes.map((route: AgentRoute, index: number) => (
+                  <AgentRouteCard
+                    key={index}
+                    route={route}
+                    onSelect={handleRouteSelect}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Businesses */}
+          {!agentResponse.plan && agentResponse.businesses && agentResponse.businesses.length > 0 && (
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-6 text-center">
+                Found {agentResponse.businesses.length} great places:
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {agentResponse.businesses.map((biz: AIBusiness, index: number) => {
+                  const gallery = (biz.phoos && biz.phoos.length > 0 ? biz.phoos : (biz.photos || [])) as string[];
+                  const primary = gallery?.[0] || biz.image_url;
+                  return (
+                    <div
+                      key={biz.id || index}
+                      className="text-left bg-card border border-gray-700 rounded-2xl overflow-hidden hover:border-accent transition-colors"
+                    >
+                      {primary && (
+                        <img src={primary} alt={biz.name || 'Business'} className="w-full h-40 object-cover" />
+                      )}
+                      <div className="p-5 flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-white font-semibold text-lg mb-1">{biz.name}</h3>
+                          {biz.location?.formatted_address && (
+                            <p className="text-gray-400 text-sm">{biz.location.formatted_address}</p>
+                          )}
+                        </div>
+                        {typeof biz.rating === 'number' && (
+                          <div className="text-right">
+                            <div className="text-accent font-bold">{biz.rating.toFixed(1)}</div>
+                            {typeof biz.review_count === 'number' && (
+                              <div className="text-gray-500 text-xs">{biz.review_count} reviews</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {gallery && gallery.length > 1 && (
+                        <div className="px-5 pb-4 text-gray-400 text-xs">{gallery.length} photos</div>
+                      )}
+                      {biz.AboutThisBizSpecialties && (
+                        <p className="px-5 pb-5 text-gray-300 text-sm">{biz.AboutThisBizSpecialties}</p>
+                      )}
+                      {biz.price && (
+                        <div className="px-5 pb-5 -mt-2 text-gray-400 text-sm">Price: {biz.price}</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Call to Action */}
           <div className="text-center py-8">

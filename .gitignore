@@ -33,11 +33,19 @@ frontend2/node_modules/
 frontend/dist/
 frontend2/dist/
 backend/*.pyc
+backend/*.json
+backend/search_results/
+backend/AI_*result.json
+backend/yelp_ai_test_result.json
+backend/agent_prompt_result.json
+backend/AI_search_results.json
 
 # Environment files
 .env
 .env.local
 .env.production
+backend/.env
+frontend/.env
 
 # IDE files
 .vscode/
@@ -69,4 +77,5 @@ product.md
 structure.md 
 tech.md 
 CLAUDE.md
+
 

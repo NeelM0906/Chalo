@@ -281,7 +281,7 @@ export const getAgentRecommendations = async (
     userRequest: string,
     location: string,
     distanceMiles: number = 1.5
-): Promise<import('../types').AgentResponse> => {
+): Promise<any> => {
     try {
         const requestBody = {
             user_request: userRequest,
@@ -324,9 +324,11 @@ export const getAgentRecommendations = async (
         }
 
         const data = await response.json();
-
-        if (!data.recommendations || !data.recommendations.routes) {
-            throw new Error('Invalid data format received from agent API.');
+        // Accept either legacy agent shape or AI engine shapes
+        const looksLikeLegacy = data && data.recommendations && Array.isArray(data.recommendations.routes);
+        const looksLikeAI = data && ("plans" in data || "plan" in data || "businesses" in data);
+        if (!looksLikeLegacy && !looksLikeAI) {
+            throw new Error('Invalid data format received from AI agent/engine.');
         }
 
         return data;
