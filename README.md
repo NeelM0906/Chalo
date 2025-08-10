@@ -214,3 +214,24 @@ Example:
 ```bash
 python main.py --query "Food near the river" --lang en --tld com --slow
 ```
+
+### Hugging Face Inference API TTS (no local compute)
+
+This app uses the free Hugging Face Inference API to synthesize speech. By default it calls `espnet/kan-bayashi-ljspeech-vits` and saves a WAV file.
+
+- Set your token in env:
+
+```bash
+export HUGGINGFACE_API_TOKEN=hf_XXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+- Or pass via CLI:
+
+```bash
+python main.py --query "Hidden gems in the old town" --hf-token hf_XXXXXXXXXXXXXXXX --hf-model espnet/kan-bayashi-ljspeech-vits
+```
+
+Notes:
+- No on-device speech generation occurs; audio is returned by the HF service.
+- Free tier may be rate-limited or slow on cold starts (the app retries 503s).
+- Output is WAV; change the `--out` path to control the filename.
