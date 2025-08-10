@@ -226,7 +226,7 @@ const FavoritesPage: React.FC = () => {
 
 // --- Main App Content & Router ---
 const AppContent: React.FC = () => {
-  const [route, setRoute] = useState(window.location.hash);
+  const [route, setRoute] = useState(window.location.hash || '#/');
   const { favorites } = useFavorites();
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
@@ -242,6 +242,9 @@ const AppContent: React.FC = () => {
 
   let page;
   switch (route) {
+    case '#/':
+      page = <HomePage />;
+      break;
     case '#/agent':
       page = <AgentChatPage />;
       break;
@@ -258,7 +261,7 @@ const AppContent: React.FC = () => {
       page = <CustomTripPage />;
       break;
     default:
-      page = <HomePage />;
+      page = <AgentChatPage />;
   }
 
   return (
@@ -292,7 +295,7 @@ const AppContent: React.FC = () => {
         {page}
       </main>
       <footer className="text-center py-6 text-gray-500 text-sm">
-        <p>Powered by custom recommendation engine. Adventures may be unpredictable.</p>
+        <p>Powered by AI Adventure Guide. Adventures may be unpredictable.</p>
       </footer>
     </div>
   );

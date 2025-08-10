@@ -29,15 +29,30 @@ backend/__pycache__/
 frontend/node_modules/
 frontend2/node_modules/
 
+# Python bytecode and cache
+*.pyc
+__pycache__/
+**/__pycache__/
+
 # Build outputs
 frontend/dist/
 frontend2/dist/
 backend/*.pyc
+backend/*.json
+backend/search_results/
+search_results/
+output/
+backend/AI_*result.json
+backend/yelp_ai_test_result.json
+backend/agent_prompt_result.json
+backend/AI_search_results.json
 
 # Environment files
 .env
 .env.local
 .env.production
+backend/.env
+frontend/.env
 
 # IDE files
 .vscode/
@@ -69,4 +84,5 @@ product.md
 structure.md 
 tech.md 
 CLAUDE.md
+
 

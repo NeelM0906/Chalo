@@ -95,8 +95,46 @@ export interface AIBusiness {
   AboutThisBizYearEstablished?: string;
 }
 
+// AI day plan types (optional structure returned by AI engine)
+export interface AIDayPlanStop {
+  time?: string; // e.g., "09:00 AM"
+  name: string;
+  category?: string;
+  notes?: string;
+  address?: string;
+  image_url?: string;
+  duration_minutes?: number;
+  // Enrichment fields (matched from AIBusiness)
+  price?: string;
+  rating?: number;
+  url?: string;
+  lat?: number;
+  lng?: number;
+}
+
+export interface AIDayPlan {
+  id?: string;
+  title: string;
+  summary?: string;
+  total_duration_minutes?: number;
+  total_stops?: number;
+  total_distance_miles?: number;
+  start_time?: string;
+  end_time?: string;
+  map_url?: string;
+  tips?: string[];
+  budget?: string;
+  transportation?: string;
+  weather_note?: string;
+  stops: AIDayPlanStop[];
+  additional_info?: Record<string, any>;
+}
+
 export interface AIEngineResponse {
   chat_id?: string;
   text?: string;
   businesses: AIBusiness[];
+  plan?: AIDayPlan;
+  plans?: AIDayPlan[];
+  extras?: Record<string, any>;
 }

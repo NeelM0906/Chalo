@@ -8,12 +8,18 @@ from pydantic import BaseModel
 from typing import List, Optional
 import os
 import random
+import time
+import json
 from dotenv import load_dotenv
 
 from new_engine import ChaloSearchEngine
 from itinerary_generator import ItineraryGenerator
 from category_exclusion_manager import CategoryExclusionManager
+<<<<<<< HEAD
 from AI_engine import ask_yelp_ai, transform_yelp_ai_response, UserContext
+=======
+from AI_engine import ask_yelp_ai, transform_yelp_ai_response, UserContext
+>>>>>>> origin/main
 
 # Load environment variables
 load_dotenv()
@@ -30,7 +36,8 @@ app.add_middleware(
 )
 
 # Initialize search engine and itinerary generator
-API_KEY = "AIzaSyBqEMWlxcFmX94S3rhN7tiddnUm4AmPIF8"
+# Read Google Maps API key from environment
+API_KEY = os.getenv("GOOGLE_PLACES_API_KEY", "")
 
 search_engine = ChaloSearchEngine(API_KEY)
 itinerary_generator = ItineraryGenerator()
@@ -132,12 +139,39 @@ class AIEngineBusiness(BaseModel):
     AboutThisBizYearEstablished: Optional[str] = None
 
 
+class AIDayPlanStop(BaseModel):
+    time: Optional[str] = None
+    name: str
+    category: Optional[str] = None
+    notes: Optional[str] = None
+    address: Optional[str] = None
+    image_url: Optional[str] = None
+    duration_minutes: Optional[int] = None
+
+
+class AIDayPlan(BaseModel):
+    id: Optional[str] = None
+    title: str
+    summary: Optional[str] = None
+    total_duration_minutes: Optional[int] = None
+    total_stops: Optional[int] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    map_url: Optional[str] = None
+    tips: Optional[list[str]] = None
+    budget: Optional[str] = None
+    transportation: Optional[str] = None
+    weather_note: Optional[str] = None
+    stops: list[AIDayPlanStop]
+    additional_info: Optional[dict] = None
+
+
 class AIEngineChatResponse(BaseModel):
     chat_id: Optional[str] = None
     text: Optional[str] = None
     businesses: List[AIEngineBusiness]
-
-
+    plan: Optional[AIDayPlan] = None
+    plans: Optional[list[AIDayPlan]] = None
 class AgentRequest(BaseModel):
     user_request: str
     location: Optional[str] = None
@@ -435,11 +469,26 @@ async def get_agent_recommendations(request: AgentRequest):
             f"coords=({user_context.latitude},{user_context.longitude}), location='{resolved_location or ''}'"
         )
 
-        raw = ask_yelp_ai(request.user_request.strip(), user_context)
+        # Craft a plan-seeking prompt so the AI can optionally return a structured day plan JSON
+        base_query = request.user_request.strip()
+        miles_txt = f"within ~{request.distance_miles or 1.5} miles"
+        loc_txt = f" around {resolved_location}" if resolved_location else " nearby"
+        plan_instruction = (
+            "\n\nPlease propose a single cohesive local day plan "
+            f"{miles_txt}{loc_txt}. Provide both a short natural-language summary and, if possible, "
+            "a machine-readable JSON object named plan with this shape:"
+            " {title, summary, total_duration_minutes, total_stops, start_time, end_time, map_url, tips[], "
+            "budget, transportation, weather_note, stops:[{time, name, category, notes, address, image_url, duration_minutes}]}. "
+            "Return the JSON inside a single fenced code block labeled json."
+        )
+        composed_query = base_query + plan_instruction
+
+        # Call Yelp AI with increased timeout and a single retry. On failure, fallback to local sample.
+        raw = ask_yelp_ai(composed_query, user_context)
         transformed = transform_yelp_ai_response(raw)
 
         # Ensure shape matches Pydantic model
-        businesses_payload = []
+        businesses_payload: list[AIEngineBusiness] = []
         for b in transformed.get("businesses", []):
             businesses_payload.append(
                 AIEngineBusiness(
@@ -462,11 +511,111 @@ async def get_agent_recommendations(request: AgentRequest):
                 )
             )
 
+        plan_payload = None
+        plans_payload: list[AIDayPlan] = []
+        if isinstance(transformed.get("plan"), dict):
+            plan_dict = transformed.get("plan") or {}
+            try:
+                # Coerce stops
+                stops_payload: list[AIDayPlanStop] = []
+                for s in plan_dict.get("stops", []) or []:
+                    stops_payload.append(AIDayPlanStop(**s))
+                plan_payload = AIDayPlan(
+                    id=plan_dict.get("id"),
+                    title=plan_dict.get("title") or "AI Day Plan",
+                    summary=plan_dict.get("summary"),
+                    total_duration_minutes=plan_dict.get("total_duration_minutes"),
+                    total_stops=plan_dict.get("total_stops"),
+                    start_time=plan_dict.get("start_time"),
+                    end_time=plan_dict.get("end_time"),
+                    map_url=plan_dict.get("map_url"),
+                    tips=plan_dict.get("tips"),
+                    budget=plan_dict.get("budget"),
+                    transportation=plan_dict.get("transportation"),
+                    weather_note=plan_dict.get("weather_note"),
+                    stops=stops_payload,
+                    additional_info=plan_dict.get("additional_info"),
+                )
+            except Exception:
+                plan_payload = None
+
+        if isinstance(transformed.get("plans"), list):
+            for p in transformed.get("plans") or []:
+                if isinstance(p, dict):
+                    try:
+                        stops_payload: list[AIDayPlanStop] = []
+                        for s in p.get("stops", []) or []:
+                            stops_payload.append(AIDayPlanStop(**s))
+                        plans_payload.append(
+                            AIDayPlan(
+                                id=p.get("id"),
+                                title=p.get("title") or "AI Day Plan",
+                                summary=p.get("summary"),
+                                total_duration_minutes=p.get("total_duration_minutes"),
+                                total_stops=p.get("total_stops"),
+                                start_time=p.get("start_time"),
+                                end_time=p.get("end_time"),
+                                map_url=p.get("map_url"),
+                                tips=p.get("tips"),
+                                budget=p.get("budget"),
+                                transportation=p.get("transportation"),
+                                weather_note=p.get("weather_note"),
+                                stops=stops_payload,
+                                additional_info=p.get("additional_info"),
+                            )
+                        )
+                    except Exception:
+                        pass
+
+        # Fallback: synthesize a minimal plan from businesses if no plan provided and no multiple plans
+        if plan_payload is None and not plans_payload and businesses_payload:
+            try:
+                print("Synthesizing AIDayPlan from businesses…")
+                # Build minimal stops (name, address, image)
+                stops_payload: list[AIDayPlanStop] = []
+                for b in businesses_payload[:6]:
+                    stops_payload.append(
+                        AIDayPlanStop(
+                            name=b.name or "Spot",
+                            category=None,
+                            notes=None,
+                            address=(b.location.formatted_address if b.location else None),
+                            image_url=b.image_url,
+                            duration_minutes=None,
+                        )
+                    )
+                synthesized_title = (
+                    (request.user_request[:80] + ("…" if len(request.user_request) > 80 else "")).strip()
+                ) or "AI Day Plan"
+                plan_payload = AIDayPlan(
+                    title=synthesized_title,
+                    summary=transformed.get("text"),
+                    total_duration_minutes=None,
+                    total_stops=len(stops_payload),
+                    start_time=None,
+                    end_time=None,
+                    map_url=None,
+                    tips=None,
+                    budget=None,
+                    transportation=None,
+                    weather_note=None,
+                    stops=stops_payload,
+                    additional_info={"synthesized_from_businesses": True},
+                )
+                print("Synthesized plan with", len(stops_payload), "stops")
+            except Exception as synth_err:
+                print("Failed to synthesize plan:", synth_err)
+                plan_payload = None
+
         return AIEngineChatResponse(
             chat_id=transformed.get("chat_id"),
             text=transformed.get("text"),
             businesses=businesses_payload,
+            plan=plan_payload,
+            plans=plans_payload or None,
         )
+
+        
 
     except HTTPException:
         raise

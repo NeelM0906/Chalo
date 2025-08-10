@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import React, { useState } from 'react';
 import { AIEngineResponse, AIBusiness } from '../types';
 import { getAgentRecommendations } from '../services/apiService';
 import AgentInput from './AgentInput';
 // Agent route components are not used with AI Engine response
 import AgentLoadingState from './AgentLoadingState';
 import { BrainIcon, MapPinIcon } from './icons';
+import AIDayPlanCard from './AIDayPlanCard';
 
 const AgentChatPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -21,12 +21,9 @@ const AgentChatPage: React.FC = () => {
     setCurrentSearch({ userRequest, location });
 
     try {
-      // Add minimum delay for better UX
       const minDelay = new Promise(resolve => setTimeout(resolve, 3000));
       const apiCall = getAgentRecommendations(userRequest, location, distanceMiles);
-      
       const [result] = await Promise.all([apiCall, minDelay]);
-      
       setAgentResponse(result);
     } catch (e) {
       console.error('Agent search error:', e);
@@ -109,6 +106,18 @@ const AgentChatPage: React.FC = () => {
             </div>
           )}
 
+          {/* Plans - single or multiple */}
+          {Array.isArray(agentResponse.plans) && agentResponse.plans.length > 0 && (
+            <div className="space-y-6">
+              {agentResponse.plans.map((p, idx) => (
+                <AIDayPlanCard key={(p as any).id || idx} plan={p as any} />
+              ))}
+            </div>
+          )}
+          {!agentResponse.plans && agentResponse.plan && (
+            <AIDayPlanCard plan={agentResponse.plan as any} />
+          )}
+
           {/* Businesses */}
           {agentResponse.businesses && agentResponse.businesses.length > 0 && (
             <div>
@@ -167,7 +176,7 @@ const AgentChatPage: React.FC = () => {
             <a 
               href="#/" 
               onClick={handleNavClick}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-secondary hover:bg-card text-white font-semibold rounded-xl transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-secondary hover:bg-card text:white font-semibold rounded-xl transition-colors"
             >
               <MapPinIcon className="w-5 h-5" />
               Browse Regular Itineraries
@@ -281,7 +290,6 @@ const AgentChatPage: React.FC = () => {
                   {selectedBusiness.location?.zip_code && (
                     <div><span className="text-gray-400">Zip Code:</span> {selectedBusiness.location.zip_code}</div>
                   )}
-                  {/* Hiding country and formatted address per request */}
                   {(selectedBusiness.coordinates?.lat !== undefined || selectedBusiness.coordinates?.lng !== undefined) && (
                     <div className="md:col-span-2">
                       <span className="text-gray-400">Coordinates:</span> {selectedBusiness.coordinates?.lat ?? '—'}, {selectedBusiness.coordinates?.lng ?? '—'}

@@ -53,7 +53,7 @@ class YelpAIError(Exception):
 def _get_api_key() -> str:
     """Fetch Yelp API key from env, raising if missing."""
     load_dotenv()  # no-op if no .env
-    api_key = "dnUhOwLs5n21ToEMEYQ8TDeraOF-8X8iMWouWoGzHYZpIDpe_ZOxPUUxOh2Hykp-u9MRHPbM5n3gGW0qBnK_Jq0i0qa17VpHifx-Jz9xbXL7VPnYXB6ss-NMhyiYaHYx"
+    api_key = os.getenv("YELP_API_KEY", "")
     if not api_key:
         raise YelpAIError(
             "YELP_API_KEY is not set. Add it to your environment or backend/.env"
@@ -326,17 +326,301 @@ def _transform_business(b: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+<<<<<<< HEAD
+def _parse_duration_to_minutes(value: Any) -> Optional[int]:
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        try:
+            iv = int(value)
+            return iv if iv >= 0 else None
+        except Exception:
+            return None
+    if isinstance(value, str):
+        s = value.strip().lower()
+        # Examples: "90", "90m", "90 min", "1h 30m", "1.5h", "2 hr", "2 hours"
+        # quick numeric parse
+        if s.isdigit():
+            return int(s)
+        # extract hours and minutes
+        import re
+        hours = 0
+        minutes = 0
+        # 1h 30m or 1 hr 30 min
+        h_match = re.search(r"(\d+(?:\.\d+)?)\s*h|\b(\d+(?:\.\d+)?)\s*hour", s)
+        if h_match:
+            val = h_match.group(1) or h_match.group(2)
+            try:
+                hours = float(val)
+            except Exception:
+                hours = 0
+        m_match = re.search(r"(\d+)\s*m|\b(\d+)\s*min", s)
+        if m_match:
+            valm = m_match.group(1) or m_match.group(2)
+            try:
+                minutes = int(valm)
+            except Exception:
+                minutes = 0
+        if hours or minutes:
+            return int(round(hours * 60 + minutes))
+        # maybe plain minutes with suffix like "90mins"
+        m2 = re.search(r"(\d+)\s*mins?", s)
+        if m2:
+            try:
+                return int(m2.group(1))
+            except Exception:
+                return None
+        # maybe like "1.5 hours"
+        h2 = re.search(r"(\d+(?:\.\d+)?)\s*hours?", s)
+        if h2:
+            try:
+                return int(round(float(h2.group(1)) * 60))
+            except Exception:
+                return None
+    return None
+
+
+def _normalize_day_plan_stop(stop_like: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    if not isinstance(stop_like, dict):
+        return None
+    name = (
+        stop_like.get("name")
+        or stop_like.get("title")
+        or stop_like.get("place_name")
+        or (stop_like.get("business") or {}).get("name")
+    )
+    if not isinstance(name, str) or not name.strip():
+        return None
+    time = stop_like.get("time") or stop_like.get("start_time") or stop_like.get("at")
+    category = stop_like.get("category") or stop_like.get("type")
+    notes = stop_like.get("notes") or stop_like.get("description") or stop_like.get("tip")
+    address = stop_like.get("address")
+    if not address and isinstance(stop_like.get("location"), dict):
+        loc = stop_like.get("location")
+        address = loc.get("formatted_address") or loc.get("address") or ", ".join(
+            [p for p in loc.get("display_address", []) if isinstance(p, str)]
+        ) if isinstance(loc.get("display_address"), list) else None
+    image_url = (
+        stop_like.get("image")
+        or stop_like.get("image_url")
+        or stop_like.get("photo")
+        or stop_like.get("thumbnail")
+    )
+    duration_minutes = _parse_duration_to_minutes(
+        stop_like.get("duration_minutes") or stop_like.get("duration")
+    )
+    return {
+        "time": time,
+        "name": name,
+        "category": category,
+        "notes": notes,
+        "address": address,
+        "image_url": image_url,
+        "duration_minutes": duration_minutes,
+    }
+
+
+def _normalize_day_plan(obj: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    if not isinstance(obj, dict):
+        return None
+    # identify stops
+    stops_container = (
+        obj.get("stops")
+        or obj.get("schedule")
+        or obj.get("itinerary")
+        or obj.get("segments")
+    )
+    if not isinstance(stops_container, list):
+        return None
+    normalized_stops: list[Dict[str, Any]] = []
+    for s in stops_container:
+        norm = _normalize_day_plan_stop(s)
+        if norm:
+            normalized_stops.append(norm)
+    if not normalized_stops:
+        return None
+
+    title = (
+        obj.get("title")
+        or obj.get("name")
+        or obj.get("route_name")
+        or "AI Day Plan"
+    )
+    summary = obj.get("summary") or obj.get("description")
+    total_duration_minutes = _parse_duration_to_minutes(
+        obj.get("total_duration_minutes") or obj.get("duration")
+    )
+    start_time = obj.get("start_time") or obj.get("start")
+    end_time = obj.get("end_time") or obj.get("end")
+    tips = obj.get("tips")
+    if isinstance(tips, str):
+        tips = [t.strip() for t in tips.split("\n") if t.strip()]
+    if not isinstance(tips, list):
+        tips = None
+    map_url = obj.get("map_url") or obj.get("map")
+    budget = obj.get("budget")
+    transportation = obj.get("transportation") or obj.get("transport")
+    weather_note = obj.get("weather_note") or obj.get("weather")
+
+    plan: Dict[str, Any] = {
+        "id": obj.get("id") or obj.get("plan_id"),
+        "title": title,
+        "summary": summary,
+        "total_duration_minutes": total_duration_minutes,
+        "total_stops": obj.get("total_stops") or len(normalized_stops),
+        "start_time": start_time,
+        "end_time": end_time,
+        "map_url": map_url,
+        "tips": tips,
+        "budget": budget,
+        "transportation": transportation,
+        "weather_note": weather_note,
+        "stops": normalized_stops,
+    }
+    # include additional unknown fields
+    additional_info: Dict[str, Any] = {}
+    for k, v in obj.items():
+        if k not in {
+            "id",
+            "plan_id",
+            "title",
+            "name",
+            "route_name",
+            "summary",
+            "description",
+            "total_duration_minutes",
+            "duration",
+            "total_stops",
+            "start_time",
+            "start",
+            "end_time",
+            "end",
+            "map_url",
+            "map",
+            "tips",
+            "budget",
+            "transportation",
+            "transport",
+            "weather_note",
+            "weather",
+            "stops",
+            "schedule",
+            "itinerary",
+            "segments",
+        }:
+            additional_info[k] = v
+    if additional_info:
+        plan["additional_info"] = additional_info
+    return plan
+
+
+def _attempt_parse_json_from_text(text: str) -> Optional[Dict[str, Any]]:
+    if not text or "{" not in text:
+        return None
+    import re, json as _json
+    # grab first JSON-like block
+    candidates: list[str] = []
+    # within code fences
+    for m in re.finditer(r"```(?:json)?\n([\s\S]*?)\n```", text):
+        candidates.append(m.group(1))
+    # fallback: braces region
+    if not candidates:
+        brace_match = re.search(r"\{[\s\S]*\}", text)
+        if brace_match:
+            candidates.append(brace_match.group(0))
+    for c in candidates:
+        try:
+            obj = _json.loads(c)
+            if isinstance(obj, dict):
+                return obj
+        except Exception:
+            continue
+    return None
+
+
+def _extract_day_plan(raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    # 1) Look for an object in raw that looks like a plan
+    for obj in _iter_dicts(raw):
+        plan = _normalize_day_plan(obj)
+        if plan:
+            return plan
+    # 2) Try parse JSON from text field and normalize
+    text = _extract_text(raw)
+    if isinstance(text, str):
+        maybe = _attempt_parse_json_from_text(text)
+        if isinstance(maybe, dict):
+            plan = _normalize_day_plan(maybe)
+            if plan:
+                return plan
+        # heuristically extract a simple bullet plan could be future work
+    return None
+
+
+=======
+>>>>>>> origin/main
 def transform_yelp_ai_response(raw: Dict[str, Any]) -> Dict[str, Any]:
     chat_id = _extract_chat_id(raw)
     text = _extract_text(raw)
     businesses_raw = _collect_businesses(raw)
     businesses = [_transform_business(b) for b in businesses_raw]
+    plan = _extract_day_plan(raw)
 
-    return {
+    # Try to extract multiple plans if present
+    def _extract_day_plans(value: Any) -> Optional[list[Dict[str, Any]]]:
+        # 1) look for an array field that contains plan-like dicts
+        candidates: list[Dict[str, Any]] = []
+        if isinstance(value, dict):
+            for key, val in value.items():
+                if isinstance(val, list):
+                    group: list[Dict[str, Any]] = []
+                    for item in val:
+                        if isinstance(item, dict):
+                            norm = _normalize_day_plan(item)
+                            if norm:
+                                group.append(norm)
+                    if group:
+                        candidates.extend(group)
+            # recursively explore
+            for v in value.values():
+                found = _extract_day_plans(v)
+                if found:
+                    candidates.extend(found)
+        elif isinstance(value, list):
+            for item in value:
+                found = _extract_day_plans(item)
+                if found:
+                    candidates.extend(found)
+        return candidates or None
+
+    plans = _extract_day_plans(raw) or []
+    # Also try parsing JSON from text for an explicit { plans: [...] } or array of plans
+    if not plans and isinstance(text, str):
+        maybe = _attempt_parse_json_from_text(text)
+        if isinstance(maybe, dict):
+            arr = maybe.get("plans")
+            if isinstance(arr, list):
+                for item in arr:
+                    if isinstance(item, dict):
+                        norm = _normalize_day_plan(item)
+                        if norm:
+                            plans.append(norm)
+        elif isinstance(maybe, list):
+            for item in maybe:
+                if isinstance(item, dict):
+                    norm = _normalize_day_plan(item)
+                    if norm:
+                        plans.append(norm)
+
+    result: Dict[str, Any] = {
         "chat_id": chat_id,
         "text": text,
         "businesses": businesses,
     }
+    if plan:
+        result["plan"] = plan
+    if plans:
+        result["plans"] = plans
+    return result
 
 
 def _parse_cli_args(argv: list[str]) -> Optional[Dict[str, Any]]:
