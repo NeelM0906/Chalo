@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { AgentRoute, AgentResponse, AIEngineResponse, AIBusiness } from '../types';
+import { AIEngineResponse, AIBusiness } from '../types';
 import { getAgentRecommendations } from '../services/apiService';
 import AgentInput from './AgentInput';
-import AgentRouteCard from './AgentRouteCard';
-import AgentRouteModal from './AgentRouteModal';
+// Agent route components are not used with AI Engine response
 import AgentLoadingState from './AgentLoadingState';
 import { BrainIcon, MapPinIcon } from './icons';
 import AIDayPlanCard from './AIDayPlanCard';
@@ -11,9 +10,9 @@ import AIDayPlanCard from './AIDayPlanCard';
 const AgentChatPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [agentResponse, setAgentResponse] = useState<(Partial<AgentResponse> & Partial<AIEngineResponse>) | null>(null);
-  const [selectedRoute, setSelectedRoute] = useState<AgentRoute | null>(null);
+  const [agentResponse, setAgentResponse] = useState<AIEngineResponse | null>(null);
   const [currentSearch, setCurrentSearch] = useState<{ userRequest: string; location: string } | null>(null);
+  const [selectedBusiness, setSelectedBusiness] = useState<AIBusiness | null>(null);
 
   const handleSearch = async (userRequest: string, location: string, distanceMiles: number) => {
     setIsLoading(true);
@@ -25,17 +24,7 @@ const AgentChatPage: React.FC = () => {
       const minDelay = new Promise(resolve => setTimeout(resolve, 3000));
       const apiCall = getAgentRecommendations(userRequest, location, distanceMiles);
       const [result] = await Promise.all([apiCall, minDelay]);
-
-      const hasRoutes = !!(result?.recommendations?.routes && result.recommendations.routes.length > 0);
-      const hasPlans = Array.isArray(result?.plans) && result.plans.length > 0;
-      const hasPlan = !!result?.plan;
-      const hasBusinesses = Array.isArray(result?.businesses) && result.businesses.length > 0;
-
-      if (hasRoutes || hasPlans || hasPlan || hasBusinesses) {
-        setAgentResponse(result);
-      } else {
-        setError("I couldn't find any great routes or plans for your request. Try different keywords or expand your search area.");
-      }
+      setAgentResponse(result);
     } catch (e) {
       console.error('Agent search error:', e);
       if (e instanceof Error) {
@@ -52,13 +41,7 @@ const AgentChatPage: React.FC = () => {
     }
   };
 
-  const handleRouteSelect = (route: AgentRoute) => {
-    setSelectedRoute(route);
-  };
-
-  const handleCloseModal = () => {
-    setSelectedRoute(null);
-  };
+  // No route selection/modal in AI Engine mode
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -108,22 +91,8 @@ const AgentChatPage: React.FC = () => {
       {/* Results Section */}
       {!isLoading && agentResponse && (
         <div className="space-y-8">
-          {/* Multiple plans */}
-          {Array.isArray(agentResponse.plans) && agentResponse.plans.length > 0 && (
-            <div className="space-y-6">
-              {agentResponse.plans.map((p, idx) => (
-                <AIDayPlanCard key={(p as any).id || idx} plan={p as any} />
-              ))}
-            </div>
-          )}
-
-          {/* Single plan */}
-          {!agentResponse.plans && agentResponse.plan && (
-            <AIDayPlanCard plan={agentResponse.plan as any} />
-          )}
-
-          {/* Chat text summary: hide if any plan present */}
-          {agentResponse.text && !agentResponse.plan && !agentResponse.plans && (
+          {/* Chat text summary */}
+          {agentResponse.text && (
             <div className="bg-card border border-gray-700 rounded-2xl p-6">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-10 h-10 bg-accent/20 text-accent rounded-full flex items-center justify-center">
@@ -137,26 +106,20 @@ const AgentChatPage: React.FC = () => {
             </div>
           )}
 
-          {/* Routes (legacy) */}
-          {agentResponse.recommendations?.routes && (
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-6 text-center">
-                Here are {agentResponse.recommendations.routes.length} perfect routes for you:
-              </h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {agentResponse.recommendations.routes.map((route: AgentRoute, index: number) => (
-                  <AgentRouteCard
-                    key={index}
-                    route={route}
-                    onSelect={handleRouteSelect}
-                  />
-                ))}
-              </div>
+          {/* Plans - single or multiple */}
+          {Array.isArray(agentResponse.plans) && agentResponse.plans.length > 0 && (
+            <div className="space-y-6">
+              {agentResponse.plans.map((p, idx) => (
+                <AIDayPlanCard key={(p as any).id || idx} plan={p as any} />
+              ))}
             </div>
+          )}
+          {!agentResponse.plans && agentResponse.plan && (
+            <AIDayPlanCard plan={agentResponse.plan as any} />
           )}
 
           {/* Businesses */}
-          {!agentResponse.plan && agentResponse.businesses && agentResponse.businesses.length > 0 && (
+          {agentResponse.businesses && agentResponse.businesses.length > 0 && (
             <div>
               <h2 className="text-2xl font-bold text-white mb-6 text-center">
                 Found {agentResponse.businesses.length} great places:
@@ -166,41 +129,41 @@ const AgentChatPage: React.FC = () => {
                   const gallery = (biz.phoos && biz.phoos.length > 0 ? biz.phoos : (biz.photos || [])) as string[];
                   const primary = gallery?.[0] || biz.image_url;
                   return (
-                    <div
-                      key={biz.id || index}
-                      className="text-left bg-card border border-gray-700 rounded-2xl overflow-hidden hover:border-accent transition-colors"
-                    >
-                      {primary && (
-                        <img src={primary} alt={biz.name || 'Business'} className="w-full h-40 object-cover" />
-                      )}
-                      <div className="p-5 flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="text-white font-semibold text-lg mb-1">{biz.name}</h3>
-                          {biz.location?.formatted_address && (
-                            <p className="text-gray-400 text-sm">{biz.location.formatted_address}</p>
-                          )}
-                        </div>
-                        {typeof biz.rating === 'number' && (
-                          <div className="text-right">
-                            <div className="text-accent font-bold">{biz.rating.toFixed(1)}</div>
-                            {typeof biz.review_count === 'number' && (
-                              <div className="text-gray-500 text-xs">{biz.review_count} reviews</div>
-                            )}
-                          </div>
+                  <button
+                    key={biz.id || index}
+                    onClick={() => setSelectedBusiness(biz)}
+                    className="text-left bg-card border border-gray-700 rounded-2xl overflow-hidden hover:border-accent transition-colors"
+                  >
+                    {primary && (
+                      <img src={primary} alt={biz.name || 'Business'} className="w-full h-40 object-cover" />
+                    )}
+                    <div className="p-5 flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-white font-semibold text-lg mb-1">{biz.name}</h3>
+                        {biz.location?.formatted_address && (
+                          <p className="text-gray-400 text-sm">{biz.location.formatted_address}</p>
                         )}
                       </div>
-                      {gallery && gallery.length > 1 && (
-                        <div className="px-5 pb-4 text-gray-400 text-xs">{gallery.length} photos</div>
-                      )}
-                      {biz.AboutThisBizSpecialties && (
-                        <p className="px-5 pb-5 text-gray-300 text-sm">{biz.AboutThisBizSpecialties}</p>
-                      )}
-                      {biz.price && (
-                        <div className="px-5 pb-5 -mt-2 text-gray-400 text-sm">Price: {biz.price}</div>
+                      {typeof biz.rating === 'number' && (
+                        <div className="text-right">
+                          <div className="text-accent font-bold">{biz.rating.toFixed(1)}</div>
+                          {typeof biz.review_count === 'number' && (
+                            <div className="text-gray-500 text-xs">{biz.review_count} reviews</div>
+                          )}
+                        </div>
                       )}
                     </div>
-                  );
-                })}
+                    {gallery && gallery.length > 1 && (
+                      <div className="px-5 pb-4 text-gray-400 text-xs">{gallery.length} photos</div>
+                    )}
+                    {biz.AboutThisBizSpecialties && (
+                      <p className="px-5 pb-5 text-gray-300 text-sm">{biz.AboutThisBizSpecialties}</p>
+                    )}
+                    {biz.price && (
+                      <div className="px-5 pb-5 -mt-2 text-gray-400 text-sm">Price: {biz.price}</div>
+                    )}
+                  </button>
+                )})}
               </div>
             </div>
           )}
@@ -213,7 +176,7 @@ const AgentChatPage: React.FC = () => {
             <a 
               href="#/" 
               onClick={handleNavClick}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-secondary hover:bg-card text-white font-semibold rounded-xl transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-secondary hover:bg-card text:white font-semibold rounded-xl transition-colors"
             >
               <MapPinIcon className="w-5 h-5" />
               Browse Regular Itineraries
@@ -238,12 +201,105 @@ const AgentChatPage: React.FC = () => {
         </div>
       )}
 
-      {/* Route Detail Modal */}
-      {selectedRoute && (
-        <AgentRouteModal
-          route={selectedRoute}
-          onClose={handleCloseModal}
-        />
+      {/* Business detail modal */}
+      {selectedBusiness && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="bg-card border border-gray-700 rounded-2xl max-w-2xl w-full overflow-hidden">
+            {/* Header image */}
+            {(() => {
+              const gallery = (selectedBusiness.phoos && selectedBusiness.phoos.length > 0 ? selectedBusiness.phoos : (selectedBusiness.photos || [])) as string[];
+              const primary = gallery?.[0] || selectedBusiness.image_url;
+              return primary ? (
+                <img src={primary} alt={selectedBusiness.name || 'Business'} className="w-full h-56 object-cover" />
+              ) : null;
+            })()}
+            <div className="p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-2xl font-bold text-white mb-1">{selectedBusiness.name}</h3>
+                  {selectedBusiness.location?.formatted_address && (
+                    <p className="text-gray-400">{selectedBusiness.location.formatted_address}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setSelectedBusiness(null)}
+                  className="text-gray-400 hover:text-white"
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="mt-4 flex items-center gap-4 text-sm text-gray-300">
+                {typeof selectedBusiness.rating === 'number' && (
+                  <span className="text-accent font-semibold">Rating: {selectedBusiness.rating.toFixed(1)}</span>
+                )}
+                {typeof selectedBusiness.review_count === 'number' && (
+                  <span>{selectedBusiness.review_count} reviews</span>
+                )}
+                {selectedBusiness.price && <span>Price: {selectedBusiness.price}</span>}
+              </div>
+
+              {/* About sections */}
+              <div className="mt-6 space-y-3 text-gray-300 text-sm">
+                {selectedBusiness.AboutThisBizBio && (
+                  <p><span className="text-gray-400">About:</span> {selectedBusiness.AboutThisBizBio}</p>
+                )}
+                {selectedBusiness.AboutThisBizSpecialties && (
+                  <p><span className="text-gray-400">Specialties:</span> {selectedBusiness.AboutThisBizSpecialties}</p>
+                )}
+                {selectedBusiness.AboutThisBizHistory && (
+                  <p><span className="text-gray-400">History:</span> {selectedBusiness.AboutThisBizHistory}</p>
+                )}
+                {selectedBusiness.AboutThisBizYearEstablished && (
+                  <p><span className="text-gray-400">Established:</span> {selectedBusiness.AboutThisBizYearEstablished}</p>
+                )}
+              </div>
+
+              {/* Photos gallery */}
+              {(() => {
+                const gallery = (selectedBusiness.phoos && selectedBusiness.phoos.length > 0 ? selectedBusiness.phoos : (selectedBusiness.photos || [])) as string[];
+                if (gallery && gallery.length > 1) {
+                  return (
+                    <div className="mt-6 grid grid-cols-3 gap-2">
+                      {gallery.slice(0, 6).map((url, idx) => (
+                        <img key={idx} src={url} alt={`Photo ${idx + 1}`} className="w-full h-24 object-cover rounded" />
+                      ))}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+
+              {/* Full details (keeps users on our app) */}
+              <div className="mt-6 border-t border-gray-700 pt-4">
+                <h4 className="text-white font-semibold mb-3">Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-300">
+                  {selectedBusiness.location?.address1 && (
+                    <div><span className="text-gray-400">Address 1:</span> {selectedBusiness.location.address1}</div>
+                  )}
+                  {selectedBusiness.location?.address2 && (
+                    <div><span className="text-gray-400">Address 2:</span> {selectedBusiness.location.address2}</div>
+                  )}
+                  {selectedBusiness.location?.city && (
+                    <div><span className="text-gray-400">City:</span> {selectedBusiness.location.city}</div>
+                  )}
+                  {selectedBusiness.location?.state && (
+                    <div><span className="text-gray-400">State:</span> {selectedBusiness.location.state}</div>
+                  )}
+                  {selectedBusiness.location?.zip_code && (
+                    <div><span className="text-gray-400">Zip Code:</span> {selectedBusiness.location.zip_code}</div>
+                  )}
+                  {(selectedBusiness.coordinates?.lat !== undefined || selectedBusiness.coordinates?.lng !== undefined) && (
+                    <div className="md:col-span-2">
+                      <span className="text-gray-400">Coordinates:</span> {selectedBusiness.coordinates?.lat ?? '—'}, {selectedBusiness.coordinates?.lng ?? '—'}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

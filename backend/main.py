@@ -15,7 +15,11 @@ from dotenv import load_dotenv
 from new_engine import ChaloSearchEngine
 from itinerary_generator import ItineraryGenerator
 from category_exclusion_manager import CategoryExclusionManager
-from AI_engine import ask_yelp_ai, transform_yelp_ai_response, UserContext, YelpAIError
+<<<<<<< HEAD
+from AI_engine import ask_yelp_ai, transform_yelp_ai_response, UserContext
+=======
+from AI_engine import ask_yelp_ai, transform_yelp_ai_response, UserContext
+>>>>>>> origin/main
 
 # Load environment variables
 load_dotenv()
@@ -165,27 +169,15 @@ class AIDayPlan(BaseModel):
 class AIEngineChatResponse(BaseModel):
     chat_id: Optional[str] = None
     text: Optional[str] = None
-    businesses: List[AIEngineBusiness] = []
+    businesses: List[AIEngineBusiness]
     plan: Optional[AIDayPlan] = None
     plans: Optional[list[AIDayPlan]] = None
 class AgentRequest(BaseModel):
     user_request: str
-    location: str
-    distance_miles: Optional[float] = 1.5
+    location: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
-
-class AgentRoute(BaseModel):
-    name: str
-    description: str
-    stops: List[dict]
-    total_duration_minutes: int
-    local_tip: Optional[str] = None
-
-class AgentRecommendationResponse(BaseModel):
-    user_intent: dict
-    recommendations: dict
-    search_context: dict
+    distance_miles: Optional[float] = 1.5
 
 @app.get("/")
 async def root():
@@ -433,14 +425,10 @@ async def refresh_category(request: RefreshCategoryRequest):
 @app.post("/api/agent-recommendations", response_model=AIEngineChatResponse)
 async def get_agent_recommendations(request: AgentRequest):
     """
-    Get conversational travel recommendations based on natural language input.
-    
-    This endpoint processes natural language requests like:
-    - "thai food and something sweet"
-    - "chinese food and activities" 
-    - "coffee and a walk in the park"
-    
-    Returns personalized route recommendations with local insights.
+    AI search powered by Yelp AI Chat v2.
+
+    Accepts a natural language query and optional location (as a string) or coordinates.
+    Returns chat text and a normalized list of businesses.
     """
     try:
         # Validate input
@@ -496,16 +484,7 @@ async def get_agent_recommendations(request: AgentRequest):
         composed_query = base_query + plan_instruction
 
         # Call Yelp AI with increased timeout and a single retry. On failure, fallback to local sample.
-        try:
-            raw = ask_yelp_ai(composed_query, user_context, timeout_seconds=30)
-        except YelpAIError:
-            time.sleep(2.0)
-            try:
-                raw = ask_yelp_ai(composed_query, user_context, timeout_seconds=45)
-            except YelpAIError:
-                sample_path = os.path.join(os.path.dirname(__file__), "AI_search_results.json")
-                with open(sample_path, "r", encoding="utf-8") as f:
-                    raw = json.load(f)
+        raw = ask_yelp_ai(composed_query, user_context)
         transformed = transform_yelp_ai_response(raw)
 
         # Ensure shape matches Pydantic model
@@ -635,14 +614,16 @@ async def get_agent_recommendations(request: AgentRequest):
             plan=plan_payload,
             plans=plans_payload or None,
         )
+
         
+
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Agent API Error: {e}")
+        print(f"AI Engine API Error: {e}")
         raise HTTPException(
             status_code=500,
-            detail="An error occurred while processing your request. Please try again with different keywords."
+            detail="An error occurred while processing your request. Please try again."
         )
 
 @app.get("/api/maps-config")

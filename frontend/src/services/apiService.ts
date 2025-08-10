@@ -279,15 +279,19 @@ export const healthCheck = async (): Promise<boolean> => {
 
 export const getAgentRecommendations = async (
     userRequest: string,
-    location: string,
-    distanceMiles: number = 1.5
-): Promise<any> => {
+    location?: string,
+    distanceMiles: number = 1.5,
+    latitude?: number,
+    longitude?: number,
+): Promise<import('../types').AIEngineResponse> => {
     try {
-        const requestBody = {
+        const requestBody: any = {
             user_request: userRequest,
-            location,
-            distance_miles: distanceMiles
+            distance_miles: distanceMiles,
         };
+        if (location) requestBody.location = location;
+        if (latitude !== undefined) requestBody.latitude = latitude;
+        if (longitude !== undefined) requestBody.longitude = longitude;
 
         const response = await fetch(`${API_BASE_URL}/api/agent-recommendations`, {
             method: 'POST',
@@ -324,14 +328,10 @@ export const getAgentRecommendations = async (
         }
 
         const data = await response.json();
-        // Accept either legacy agent shape or AI engine shapes
-        const looksLikeLegacy = data && data.recommendations && Array.isArray(data.recommendations.routes);
-        const looksLikeAI = data && ("plans" in data || "plan" in data || "businesses" in data);
-        if (!looksLikeLegacy && !looksLikeAI) {
-            throw new Error('Invalid data format received from AI agent/engine.');
+        if (!data || !('businesses' in data)) {
+            throw new Error('Invalid data format received from AI engine.');
         }
-
-        return data;
+        return data as import('../types').AIEngineResponse;
     } catch (error) {
         console.error('Error getting agent recommendations:', error);
 
@@ -342,7 +342,7 @@ export const getAgentRecommendations = async (
             throw error;
         }
 
-        throw new Error('Failed to get recommendations from the AI agent.');
+        throw new Error('Failed to get recommendations from the AI engine.');
     }
 };
 

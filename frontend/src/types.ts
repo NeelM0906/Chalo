@@ -55,37 +55,44 @@ export interface AvailableSpotsResponse {
 // Agent-specific types
 export interface AgentRequest {
   user_request: string;
-  location: string;
-  distance_miles: number;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+  distance_miles?: number;
 }
 
-export interface AgentStop {
-  place_name: string;
-  category: string;
-  why_recommended: string;
-  walking_time_to_next: number;
+export interface AIBusinessLocation {
+  address1?: string;
+  address2?: string;
+  city?: string;
+  zip_code?: string;
+  state?: string;
+  country?: string;
+  formatted_address?: string;
 }
 
-export interface AgentRoute {
-  name: string;
-  description: string;
-  stops: AgentStop[];
-  total_duration_minutes: number;
-  local_tip: string;
+export interface AICoordinates {
+  lat?: number;
+  lng?: number;
 }
 
-export interface AgentUserIntent {
-  search_queries: string[];
-  mood_context: string;
-  experience_type: string;
-}
-
-export interface AgentResponse {
-  user_intent: AgentUserIntent;
-  recommendations: {
-    routes: AgentRoute[];
-  };
-  search_context: any;
+export interface AIBusiness {
+  id?: string;
+  alias?: string;
+  name?: string;
+  url?: string;
+  image_url?: string;
+  photos?: string[];
+  phoos?: string[];
+  location: AIBusinessLocation;
+  coordinates: AICoordinates;
+  review_count?: number;
+  price?: string;
+  rating?: number;
+  AboutThisBizBio?: string;
+  AboutThisBizHistory?: string;
+  AboutThisBizSpecialties?: string;
+  AboutThisBizYearEstablished?: string;
 }
 
 // AI day plan types (optional structure returned by AI engine)
@@ -126,12 +133,8 @@ export interface AIDayPlan {
 export interface AIEngineResponse {
   chat_id?: string;
   text?: string;
-  // When AI returns individual recommendations
-  businesses?: any[]; // FIXME: Replace 'any' with 'AIBusiness' when defined
-  // When AI returns a full day plan
+  businesses: AIBusiness[];
   plan?: AIDayPlan;
-  // When AI returns multiple day plan options
   plans?: AIDayPlan[];
-  // Any extra data the AI may include
   extras?: Record<string, any>;
 }
