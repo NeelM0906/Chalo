@@ -18,6 +18,7 @@ import os
 import sys
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
+import re
 
 import requests
 from dotenv import load_dotenv
@@ -325,7 +326,68 @@ def _transform_business(b: Dict[str, Any]) -> Dict[str, Any]:
         "AboutThisBizYearEstablished": about.get("year_established") or b.get("about_this_biz_year_established") or b.get("year_established"),
     }
 
- 
+def _is_likely_image_url(url: Optional[str]) -> bool:
+    if not url or not isinstance(url, str):
+        return False
+    try:
+        from urllib.parse import urlparse
+        path = urlparse(url).path
+    except Exception:
+        return False
+    return bool(re.search(r"\.(?:jpg|jpeg|png|webp|gif)(?:\?.*)?$", path, flags=re.IGNORECASE))
+
+
+def _enrich_plan_images(plan: Dict[str, Any], businesses: list[Dict[str, Any]]) -> Dict[str, Any]:
+    if not plan:
+        return plan
+    name_to_biz: Dict[str, Dict[str, Any]] = {}
+    for b in businesses or []:
+        name = (b.get("name") or "").strip().lower()
+        if name and name not in name_to_biz:
+            name_to_biz[name] = b
+
+    stops = plan.get("stops") or []
+    enriched_stops: list[Dict[str, Any]] = []
+    for s in stops:
+        if not isinstance(s, dict):
+            enriched_stops.append(s)
+            continue
+        image_url = s.get("image_url") or s.get("image") or s.get("photo")
+        # If the provided URL isn't an actual image, try to substitute from the matching business
+        if not _is_likely_image_url(image_url):
+            name_key = (s.get("name") or "").strip().lower()
+            b = name_to_biz.get(name_key)
+            if b:
+                gallery = b.get("phoos") or b.get("photos") or []
+                if isinstance(gallery, list) and len(gallery) > 0 and isinstance(gallery[0], str):
+                    image_url = gallery[0]
+                elif isinstance(b.get("image_url"), str):
+                    image_url = b.get("image_url")
+        new_stop = dict(s)
+        if image_url:
+            new_stop["image_url"] = image_url
+        enriched_stops.append(new_stop)
+
+    new_plan = dict(plan)
+    new_plan["stops"] = enriched_stops
+    return new_plan
+
+
+def _strip_json_from_text(text: Optional[str]) -> Optional[str]:
+    if not isinstance(text, str) or not text:
+        return text
+    # Remove any fenced code blocks ```...```
+    cleaned = re.sub(r"```(?:json)?[\s\S]*?```", "", text, flags=re.IGNORECASE)
+    # Also trim stray braces blocks at end
+    # If there's a standalone JSON starting later in the text, keep only the prefix before it
+    brace_idx = cleaned.find("{")
+    if brace_idx > -1:
+        # Heuristic: if there's a balanced JSON block after some prose, prefer prose-only
+        prefix = cleaned[:brace_idx].strip()
+        if prefix:
+            cleaned = prefix
+    return cleaned.strip()
+
 def _parse_duration_to_minutes(value: Any) -> Optional[int]:
     if value is None:
         return None
@@ -609,9 +671,18 @@ def transform_yelp_ai_response(raw: Dict[str, Any]) -> Dict[str, Any]:
                     if norm:
                         plans.append(norm)
 
+    # Strip any inline JSON from the narrative text; plans are extracted separately
+    text_clean = _strip_json_from_text(text)
+
+    # Enrich images for plan(s) using business gallery/photo urls
+    if isinstance(plan, dict):
+        plan = _enrich_plan_images(plan, businesses)
+    if isinstance(plans, list) and plans:
+        plans = [_enrich_plan_images(p, businesses) if isinstance(p, dict) else p for p in plans]
+
     result: Dict[str, Any] = {
         "chat_id": chat_id,
-        "text": text,
+        "text": text_clean,
         "businesses": businesses,
     }
     if plan:
