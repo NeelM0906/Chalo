@@ -1,0 +1,136 @@
+{
+  "chat_id": "re7IWEXg7VXpp_xUAHtjoA",
+  "text": "Here’s an exact trip for you: Start at David Zwirner (525 W 19th St), a contemporary art gallery known for immersive installations and free admission. After exploring, walk about 1.5 miles to Little Collins (708 3rd Ave), a cozy café with vegetarian-friendly sandwiches like smashed avocado toast and quick service. Both spots are affordable, so your total should stay under $50. The total walking distance is under 2 miles, making this a convenient and budget-friendly outing.",
+  "businesses": [
+    {
+      "id": "OAKZVOmQF40-tdZoxhv6Fg",
+      "alias": "david-zwirner-new-york-3",
+      "name": "David Zwirner",
+      "url": "https://www.yelp.com/biz/david-zwirner-new-york-3?adjust_creative=EBKBsM9F_a7YhY4bA4uJ8A&utm_campaign=yelp_api_v3&utm_medium=api_v3_public_ai_api_chat_v2&utm_source=EBKBsM9F_a7YhY4bA4uJ8A",
+      "location": {
+        "address1": "525 W 19th St",
+        "address2": "",
+        "city": "New York",
+        "zip_code": null,
+        "state": "NY",
+        "country": "US",
+        "formatted_address": "525 W 19th St\nNew York, NY 10011"
+      },
+      "coordinates": {
+        "lat": 40.7458819,
+        "lng": -74.007014
+      },
+      "review_count": 116,
+      "price": "$",
+      "rating": 3.9,
+      "AboutThisBizBio": null,
+      "AboutThisBizHistory": null,
+      "AboutThisBizSpecialties": null,
+      "AboutThisBizYearEstablished": null
+    },
+    {
+      "id": "47INKVVEI03wYaLZOeGbFw",
+      "alias": "the-pace-gallery-new-york",
+      "name": "The Pace Gallery",
+      "url": "https://www.yelp.com/biz/the-pace-gallery-new-york?adjust_creative=EBKBsM9F_a7YhY4bA4uJ8A&utm_campaign=yelp_api_v3&utm_medium=api_v3_public_ai_api_chat_v2&utm_source=EBKBsM9F_a7YhY4bA4uJ8A",
+      "location": {
+        "address1": "534 W 25th St",
+        "address2": "",
+        "city": "New York",
+        "zip_code": null,
+        "state": "NY",
+        "country": "US",
+        "formatted_address": "534 W 25th St\nNew York, NY 10001"
+      },
+      "coordinates": {
+        "lat": 40.7494753,
+        "lng": -74.0050923
+      },
+      "review_count": 19,
+      "price": "$",
+      "rating": 4.4,
+      "AboutThisBizBio": null,
+      "AboutThisBizHistory": null,
+      "AboutThisBizSpecialties": null,
+      "AboutThisBizYearEstablished": null
+    },
+    {
+      "id": "1aD88qNRb08LGBkl84GQTA",
+      "alias": "little-collins-new-york-3",
+      "name": "Little Collins",
+      "url": "https://www.yelp.com/biz/little-collins-new-york-3?adjust_creative=EBKBsM9F_a7YhY4bA4uJ8A&utm_campaign=yelp_api_v3&utm_medium=api_v3_public_ai_api_chat_v2&utm_source=EBKBsM9F_a7YhY4bA4uJ8A",
+      "location": {
+        "address1": "708 3rd Ave",
+        "address2": "",
+        "city": "New York",
+        "zip_code": null,
+        "state": "NY",
+        "country": "US",
+        "formatted_address": "708 3rd Ave\nNew York, NY 10017"
+      },
+      "coordinates": {
+        "lat": 40.7524167,
+        "lng": -73.973565
+      },
+      "review_count": 1343,
+      "price": "$$",
+      "rating": 4.4,
+      "AboutThisBizBio": null,
+      "AboutThisBizHistory": null,
+      "AboutThisBizSpecialties": null,
+      "AboutThisBizYearEstablished": null
+    },
+    {
+      "id": "teuwAtlOMQq7pEl1oQtXVg",
+      "alias": "banh-new-york-3",
+      "name": "Banh",
+      "url": "https://www.yelp.com/biz/banh-new-york-3?adjust_creative=EBKBsM9F_a7YhY4bA4uJ8A&utm_campaign=yelp_api_v3&utm_medium=api_v3_public_ai_api_chat_v2&utm_source=EBKBsM9F_a7YhY4bA4uJ8A",
+      "location": {
+        "address1": "942 Amsterdam Ave",
+        "address2": null,
+        "city": "New York",
+        "zip_code": null,
+        "state": "NY",
+        "country": "US",
+        "formatted_address": "942 Amsterdam Ave\nNew York, NY 10025"
+      },
+      "coordinates": {
+        "lat": 40.8008758,
+        "lng": -73.9656776
+      },
+      "review_count": 346,
+      "price": "$$",
+      "rating": 4.4,
+      "AboutThisBizBio": null,
+      "AboutThisBizHistory": null,
+      "AboutThisBizSpecialties": null,
+      "AboutThisBizYearEstablished": null
+    },
+    {
+      "id": "qGvo8VHrY85b4Ze-JaIjYg",
+      "alias": "ralphs-coffee-new-york-4",
+      "name": "Ralph's Coffee",
+      "url": "https://www.yelp.com/biz/ralphs-coffee-new-york-4?adjust_creative=EBKBsM9F_a7YhY4bA4uJ8A&utm_campaign=yelp_api_v3&utm_medium=api_v3_public_ai_api_chat_v2&utm_source=EBKBsM9F_a7YhY4bA4uJ8A",
+      "location": {
+        "address1": "888 Madison Ave",
+        "address2": "",
+        "city": "New York",
+        "zip_code": null,
+        "state": "NY",
+        "country": "US",
+        "formatted_address": "888 Madison Ave\nNew York, NY 10021"
+      },
+      "coordinates": {
+        "lat": 40.7716587057718,
+        "lng": -73.9657659083605
+      },
+      "review_count": 268,
+      "price": "$$",
+      "rating": 4.1,
+      "AboutThisBizBio": null,
+      "AboutThisBizHistory": null,
+      "AboutThisBizSpecialties": null,
+      "AboutThisBizYearEstablished": null
+    }
+  ]
+}

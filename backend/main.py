@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from new_engine import ChaloSearchEngine
 from itinerary_generator import ItineraryGenerator
 from category_exclusion_manager import CategoryExclusionManager
-from agent_tools import run_agent_recommendations
+from AI_engine import ask_yelp_ai, transform_yelp_ai_response, UserContext
 
 # Load environment variables
 load_dotenv()
@@ -98,22 +98,52 @@ class GetAvailableSpotsRequest(BaseModel):
     excluded_ids: List[str] = []
     max_distance_miles: float = 1.5
 
+class AIEngineBusinessLocation(BaseModel):
+    address1: Optional[str] = None
+    address2: Optional[str] = None
+    city: Optional[str] = None
+    zip_code: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    formatted_address: Optional[str] = None
+
+
+class AIEngineCoordinates(BaseModel):
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+
+
+class AIEngineBusiness(BaseModel):
+    id: Optional[str] = None
+    alias: Optional[str] = None
+    name: Optional[str] = None
+    url: Optional[str] = None
+    image_url: Optional[str] = None
+    photos: Optional[List[str]] = None
+    phoos: Optional[List[str]] = None
+    location: AIEngineBusinessLocation
+    coordinates: AIEngineCoordinates
+    review_count: Optional[int] = None
+    price: Optional[str] = None
+    rating: Optional[float] = None
+    AboutThisBizBio: Optional[str] = None
+    AboutThisBizHistory: Optional[str] = None
+    AboutThisBizSpecialties: Optional[str] = None
+    AboutThisBizYearEstablished: Optional[str] = None
+
+
+class AIEngineChatResponse(BaseModel):
+    chat_id: Optional[str] = None
+    text: Optional[str] = None
+    businesses: List[AIEngineBusiness]
+
+
 class AgentRequest(BaseModel):
     user_request: str
-    location: str
+    location: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     distance_miles: Optional[float] = 1.5
-
-class AgentRoute(BaseModel):
-    name: str
-    description: str
-    stops: List[dict]
-    total_duration_minutes: int
-    local_tip: Optional[str] = None
-
-class AgentRecommendationResponse(BaseModel):
-    user_intent: dict
-    recommendations: dict
-    search_context: dict
 
 @app.get("/")
 async def root():
@@ -358,70 +388,93 @@ async def refresh_category(request: RefreshCategoryRequest):
             detail="An error occurred while refreshing the category."
         )
 
-@app.post("/api/agent-recommendations", response_model=AgentRecommendationResponse)
+@app.post("/api/agent-recommendations", response_model=AIEngineChatResponse)
 async def get_agent_recommendations(request: AgentRequest):
     """
-    Get conversational travel recommendations based on natural language input.
-    
-    This endpoint processes natural language requests like:
-    - "thai food and something sweet"
-    - "chinese food and activities" 
-    - "coffee and a walk in the park"
-    
-    Returns personalized route recommendations with local insights.
+    AI search powered by Yelp AI Chat v2.
+
+    Accepts a natural language query and optional location (as a string) or coordinates.
+    Returns chat text and a normalized list of businesses.
     """
     try:
         # Validate input
         if not request.user_request or len(request.user_request.strip()) < 3:
-            raise HTTPException(
-                status_code=400, 
-                detail="User request must be at least 3 characters long"
-            )
-        
-        if not request.location or len(request.location.strip()) < 2:
-            raise HTTPException(
-                status_code=400, 
-                detail="Location must be at least 2 characters long"
-            )
-        
-        user_request = request.user_request.strip()
-        location = request.location.strip()
-        distance_miles = request.distance_miles or 1.5
-        
-        print(f"Agent API Request: '{user_request}' in {location} within {distance_miles} miles")
-        
-        # Run the agent workflow
-        result = run_agent_recommendations(user_request, location, distance_miles)
-        
-        # Check if we got valid recommendations
-        routes = result.get("recommendations", {}).get("routes", [])
-        if not routes or all(len(route.get("stops", [])) == 0 for route in routes):
-            # No valid routes found
-            total_places = sum(
-                len(places) for places in result.get("search_context", {}).get("results_by_category", {}).values()
-            )
-            
-            if total_places == 0:
-                error_msg = f"No places found matching '{user_request}' in {location} within {distance_miles} miles. Try different keywords or expand your search area."
-            else:
-                error_msg = f"Found {total_places} places but couldn't create suitable routes. Try different preferences or expand your search area."
-            
-            raise HTTPException(status_code=404, detail=error_msg)
-        
-        print(f"Agent API Success: Generated {len(routes)} routes")
-        return AgentRecommendationResponse(
-            user_intent=result["user_intent"],
-            recommendations=result["recommendations"], 
-            search_context=result["search_context"]
+            raise HTTPException(status_code=400, detail="User request must be at least 3 characters long")
+
+        # Resolve coordinates: prefer explicit lat/lng; else geocode location string if provided
+        latitude = request.latitude
+        longitude = request.longitude
+        resolved_location = (request.location or "").strip() if request.location else None
+
+        if (latitude is None or longitude is None) and resolved_location:
+            try:
+                import requests as _req
+                geocode_url = (
+                    f"https://maps.googleapis.com/maps/api/geocode/json?address={resolved_location}&key={API_KEY}"
+                )
+                geocode_resp = _req.get(geocode_url, timeout=10)
+                if geocode_resp.ok:
+                    geo_data = geocode_resp.json()
+                    results = geo_data.get("results", [])
+                    if results:
+                        loc = results[0].get("geometry", {}).get("location", {})
+                        latitude = latitude or loc.get("lat")
+                        longitude = longitude or loc.get("lng")
+            except Exception:
+                # Non-fatal: continue without coordinates
+                pass
+
+        user_context = UserContext(
+            locale="en_US",
+            latitude=latitude,
+            longitude=longitude,
         )
-        
+
+        print(
+            f"AI Engine Request: '{request.user_request.strip()}', "
+            f"coords=({user_context.latitude},{user_context.longitude}), location='{resolved_location or ''}'"
+        )
+
+        raw = ask_yelp_ai(request.user_request.strip(), user_context)
+        transformed = transform_yelp_ai_response(raw)
+
+        # Ensure shape matches Pydantic model
+        businesses_payload = []
+        for b in transformed.get("businesses", []):
+            businesses_payload.append(
+                AIEngineBusiness(
+                    id=b.get("id"),
+                    alias=b.get("alias"),
+                    name=b.get("name"),
+                    url=b.get("url"),
+                    image_url=b.get("image_url"),
+                    photos=b.get("photos"),
+                    phoos=b.get("phoos"),
+                    location=AIEngineBusinessLocation(**(b.get("location") or {})),
+                    coordinates=AIEngineCoordinates(**(b.get("coordinates") or {})),
+                    review_count=b.get("review_count"),
+                    price=b.get("price"),
+                    rating=b.get("rating"),
+                    AboutThisBizBio=b.get("AboutThisBizBio"),
+                    AboutThisBizHistory=b.get("AboutThisBizHistory"),
+                    AboutThisBizSpecialties=b.get("AboutThisBizSpecialties"),
+                    AboutThisBizYearEstablished=b.get("AboutThisBizYearEstablished"),
+                )
+            )
+
+        return AIEngineChatResponse(
+            chat_id=transformed.get("chat_id"),
+            text=transformed.get("text"),
+            businesses=businesses_payload,
+        )
+
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Agent API Error: {e}")
+        print(f"AI Engine API Error: {e}")
         raise HTTPException(
             status_code=500,
-            detail="An error occurred while processing your request. Please try again with different keywords."
+            detail="An error occurred while processing your request. Please try again."
         )
 
 @app.get("/api/maps-config")
