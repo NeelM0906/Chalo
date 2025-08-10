@@ -6,12 +6,14 @@
       "config": { "distDir": "dist" }
     }
   ],
+  "installCommand": "npm i -g npm@9 && npm ci",
   "routes": [
     { "handle": "filesystem" },
     { "src": "/.*", "dest": "frontend/dist/index.html" }
   ],
   "env": {
-    "NODE_VERSION": "20"
+    "NODE_VERSION": "20",
+    "ROLLUP_SKIP_NODEJS_NATIVE": "true"
   }
 }
 
