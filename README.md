@@ -153,3 +153,48 @@ The backend uses Google Maps APIs for location data and optionally Gemini for co
 3. Implement user authentication if needed
 4. Add more sophisticated error handling and logging
 5. Deploy to production environment
+
+## Local Guide Speech Agent
+
+A minimal conversational agent that:
+- Reads recommendation content from an AI engine output (expects a JSON with a `text` field)
+- Speaks the recommendation locally using an offline, open-source TTS engine (`pyttsx3` / eSpeak on Linux)
+- Saves the audio as a WAV file
+
+### Setup
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Run
+
+Using the bundled sample AI engine output:
+
+```bash
+python main.py --query "What should I do this afternoon?"
+```
+
+Custom AI engine JSON path (must contain a `text` field):
+
+```bash
+python main.py --query "Best places for dinner?" --ai-json /path/to/ai_engine_output.json --out /workspace/output/dinner.wav
+```
+
+Optional: adjust voice and rate (depends on your installed voices):
+
+```bash
+python main.py --query "Family-friendly activities" --voice english --rate 165
+```
+
+### Integrating a real AI engine
+
+Replace `AIEngine.query` in `app/ai_engine.py` to call your service and return a dict with at least:
+
+```json
+{"text": "... your recommendation text ..."}
+```
+
+The agent will speak exactly the `text` content it receives.
