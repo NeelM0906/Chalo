@@ -15,11 +15,7 @@ from dotenv import load_dotenv
 from new_engine import ChaloSearchEngine
 from itinerary_generator import ItineraryGenerator
 from category_exclusion_manager import CategoryExclusionManager
-<<<<<<< HEAD
 from AI_engine import ask_yelp_ai, transform_yelp_ai_response, UserContext
-=======
-from AI_engine import ask_yelp_ai, transform_yelp_ai_response, UserContext
->>>>>>> origin/main
 
 # Load environment variables
 load_dotenv()
