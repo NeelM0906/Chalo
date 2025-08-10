@@ -127,7 +127,7 @@ export interface AIEngineResponse {
   chat_id?: string;
   text?: string;
   // When AI returns individual recommendations
-  businesses?: AIBusiness[];
+  businesses?: any[]; // FIXME: Replace 'any' with 'AIBusiness' when defined
   // When AI returns a full day plan
   plan?: AIDayPlan;
   // When AI returns multiple day plan options

@@ -1,6 +1,6 @@
 import React from 'react';
 import { AIDayPlan } from '../types';
-import { ClockIcon, MapPinIcon, WalkIcon, LinkIcon, BrainIcon, LogoIcon } from './icons';
+import { ClockIcon, MapPinIcon, BrainIcon, LogoIcon } from './icons';
 import AIPlanMapEmbed from './AIPlanMapEmbed';
 
 interface AIDayPlanCardProps {
