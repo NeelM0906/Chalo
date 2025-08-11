@@ -6,8 +6,7 @@
       "config": { "distDir": "dist" }
     }
   ],
-  "installCommand": "cd frontend && npm ci",
-  "buildCommand": "cd frontend && npm run build",
+  "installCommand": "npm i -g npm@9 && npm ci",
   "routes": [
     { "handle": "filesystem" },
     { "src": "/.*", "dest": "frontend/dist/index.html" }
