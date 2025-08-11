@@ -99,7 +99,11 @@ const CustomTripPage: React.FC = () => {
     } catch (e) {
       console.error(e);
       if (e instanceof Error) {
-        setError(e.message);
+        if (e.message.includes('Unable to connect to the server')) {
+          setError('Unable to connect to the recommendation service. Please ensure the backend server is running on port 8000.');
+        } else {
+          setError(e.message);
+        }
       } else {
         setError('An unexpected error occurred while generating your custom trips. Please try again.');
       }
