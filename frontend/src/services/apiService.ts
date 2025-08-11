@@ -1,6 +1,8 @@
 import { Itinerary, GroundingChunk, Stop } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Exported for diagnostics in UI; ensure no trailing slash
+const RAW_API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, '');
 
 interface ApiResponse {
     itineraries: Itinerary[];
@@ -76,7 +78,7 @@ export const getItineraries = async (
 
         if (error instanceof Error) {
             if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                throw new Error('Unable to connect to the server. Please ensure the backend is running on port 8000.');
+                throw new Error(`Network error contacting ${API_BASE_URL}: ${error.message}`);
             }
             throw error;
         }
@@ -217,7 +219,7 @@ export const getCustomTrips = async (
 
         if (error instanceof Error) {
             if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                throw new Error('Unable to connect to the server. Please ensure the backend is running on port 8000.');
+                throw new Error(`Network error contacting ${API_BASE_URL}: ${error.message}`);
             }
             throw error;
         }
@@ -337,7 +339,7 @@ export const getAgentRecommendations = async (
 
         if (error instanceof Error) {
             if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                throw new Error('Unable to connect to the server. Please ensure the backend is running on port 8000.');
+                throw new Error(`Network error contacting ${API_BASE_URL}: ${error.message}`);
             }
             throw error;
         }
